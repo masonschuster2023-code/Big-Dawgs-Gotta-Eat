@@ -66,7 +66,7 @@ function ResultRow({ date, result }: { date: string; result: FdcSearchResult }) 
               setTimeout(() => setAdded(false), 1500);
             })
           }
-          className="rounded-md bg-neutral-900 px-2 py-1 text-xs font-medium text-white disabled:opacity-50 dark:bg-white dark:text-neutral-900"
+          className="rounded-md bg-tennessee px-2 py-1 text-xs font-medium text-white transition-colors hover:bg-tennessee-dark disabled:opacity-50"
         >
           {isPending ? "Adding…" : added ? "Added ✓" : "Add"}
         </button>
@@ -93,7 +93,7 @@ export function FoodDatabaseSearch({ date }: { date: string }) {
   };
 
   return (
-    <div className="space-y-3 rounded-lg border border-neutral-200 p-4 dark:border-neutral-800">
+    <div className="space-y-3">
       <form
         onSubmit={(e) => {
           e.preventDefault();
@@ -111,7 +111,7 @@ export function FoodDatabaseSearch({ date }: { date: string }) {
         <button
           type="submit"
           disabled={isSearching}
-          className="rounded-md bg-neutral-900 px-3 py-1.5 text-sm font-medium text-white disabled:opacity-50 dark:bg-white dark:text-neutral-900"
+          className="rounded-md bg-tennessee px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-tennessee-dark disabled:opacity-50"
         >
           {isSearching ? "Searching…" : "Search"}
         </button>

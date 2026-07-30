@@ -112,7 +112,7 @@ export function BarcodeScan({ date }: { date: string }) {
   };
 
   return (
-    <div className="space-y-3 rounded-lg border border-neutral-200 p-4 dark:border-neutral-800">
+    <div className="space-y-3">
       {!barcode && (
         <>
           <div className="flex flex-wrap gap-2">
@@ -120,7 +120,7 @@ export function BarcodeScan({ date }: { date: string }) {
               <button
                 type="button"
                 onClick={startScanning}
-                className="rounded-md bg-neutral-900 px-3 py-1.5 text-sm font-medium text-white dark:bg-white dark:text-neutral-900"
+                className="rounded-md bg-tennessee px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-tennessee-dark"
               >
                 Scan with camera
               </button>
@@ -157,7 +157,7 @@ export function BarcodeScan({ date }: { date: string }) {
             <button
               type="submit"
               disabled={isLookingUp || !manualBarcode.trim()}
-              className="rounded-md bg-neutral-900 px-3 py-1.5 text-sm font-medium text-white disabled:opacity-50 dark:bg-white dark:text-neutral-900"
+              className="rounded-md bg-tennessee px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-tennessee-dark disabled:opacity-50"
             >
               {isLookingUp ? "Looking up…" : "Look up"}
             </button>
@@ -261,7 +261,7 @@ export function BarcodeScan({ date }: { date: string }) {
               type="button"
               disabled={isSaving || grams <= 0}
               onClick={submit}
-              className="rounded-md bg-neutral-900 px-3 py-1.5 text-sm font-medium text-white disabled:opacity-50 dark:bg-white dark:text-neutral-900"
+              className="rounded-md bg-tennessee px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-tennessee-dark disabled:opacity-50"
             >
               {isSaving ? "Adding…" : "Add"}
             </button>

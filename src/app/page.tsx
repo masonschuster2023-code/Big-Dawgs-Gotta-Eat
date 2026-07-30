@@ -7,6 +7,7 @@ import { FoodEntryForm } from "@/components/FoodEntryForm";
 import { FoodDatabaseSearch } from "@/components/FoodDatabaseSearch";
 import { BarcodeScan } from "@/components/BarcodeScan";
 import { DeleteFoodLogButton } from "@/components/DeleteFoodLogButton";
+import { Card } from "@/components/Card";
 import { signOut } from "@/app/auth/actions";
 
 const MEAL_ORDER = ["breakfast", "lunch", "dinner", "snack"] as const;
@@ -64,38 +65,49 @@ export default async function Home() {
   }));
 
   return (
-    <div className="min-h-screen bg-zinc-50 dark:bg-black">
+    <div className="relative min-h-screen">
+      <div
+        className="fixed inset-0 -z-20 bg-cover bg-center bg-fixed"
+        style={{ backgroundImage: "url(/home-bg.jpg)" }}
+      />
+      <div className="fixed inset-0 -z-10 bg-zinc-50/55 dark:bg-black/55" />
+
       <div className="mx-auto max-w-2xl px-4 py-8 sm:px-6">
-        <header className="mb-6 flex items-center justify-between">
+        <header className="mb-6 flex items-center justify-between rounded-2xl border border-black/5 bg-white/90 px-5 py-4 shadow-sm backdrop-blur-sm dark:border-white/10 dark:bg-neutral-900/80">
           <div>
-            <h1 className="text-xl font-semibold">Big Dawgs Gotta Eat</h1>
+            <h1 className="text-xl font-bold">
+              Big Dawgs Gotta <span className="text-tennessee">Eat</span>
+            </h1>
             <p className="text-sm text-neutral-500">{date}</p>
           </div>
-          <div className="flex items-center gap-3">
-            <Link href="/week" className="text-sm font-medium underline">
+          <div className="flex items-center gap-4">
+            <Link href="/week" className="text-sm font-medium text-tennessee hover:underline">
               This week →
             </Link>
-            <span className="text-sm text-neutral-500">{user?.email}</span>
+            <span className="hidden text-sm text-neutral-500 sm:inline">{user?.email}</span>
             <form action={signOut}>
-              <button type="submit" className="text-sm font-medium underline">
+              <button type="submit" className="text-sm font-medium text-neutral-500 hover:underline">
                 Sign out
               </button>
             </form>
           </div>
         </header>
 
-        <div className="space-y-6">
-          <DayTypePicker
-            date={date}
-            dayTypes={dayTypes ?? []}
-            selectedDayTypeId={dailyLog?.day_type_id ?? null}
-            goingOut={dailyLog?.going_out_flag ?? false}
-          />
+        <div className="space-y-5">
+          <Card title="Day type">
+            <DayTypePicker
+              date={date}
+              dayTypes={dayTypes ?? []}
+              selectedDayTypeId={dailyLog?.day_type_id ?? null}
+              goingOut={dailyLog?.going_out_flag ?? false}
+            />
+          </Card>
 
-          <MacroTotals dayType={dailyLog?.day_type ?? null} totals={totals} />
+          <Card title="Today's totals">
+            <MacroTotals dayType={dailyLog?.day_type ?? null} totals={totals} />
+          </Card>
 
-          <div>
-            <h2 className="mb-2 text-sm font-medium text-neutral-500">Today&apos;s food</h2>
+          <Card title="Today's food">
             <div className="space-y-4">
               {entriesByMeal.map(({ meal, items }) => (
                 <div key={meal}>
@@ -109,7 +121,7 @@ export default async function Home() {
                       {items.map((entry) => (
                         <li
                           key={entry.id}
-                          className="flex items-center justify-between rounded-md bg-white px-3 py-2 text-sm shadow-sm dark:bg-neutral-900"
+                          className="flex items-center justify-between rounded-lg bg-zinc-100 px-3 py-2 text-sm dark:bg-neutral-800"
                         >
                           <span>
                             {entry.food?.name}
@@ -127,22 +139,19 @@ export default async function Home() {
                 </div>
               ))}
             </div>
-          </div>
+          </Card>
 
-          <div>
-            <h2 className="mb-2 text-sm font-medium text-neutral-500">Scan barcode</h2>
+          <Card title="Scan barcode">
             <BarcodeScan date={date} />
-          </div>
+          </Card>
 
-          <div>
-            <h2 className="mb-2 text-sm font-medium text-neutral-500">Search food database</h2>
+          <Card title="Search food database">
             <FoodDatabaseSearch date={date} />
-          </div>
+          </Card>
 
-          <div>
-            <h2 className="mb-2 text-sm font-medium text-neutral-500">Add food manually</h2>
+          <Card title="Add food manually">
             <FoodEntryForm date={date} />
-          </div>
+          </Card>
         </div>
       </div>
     </div>

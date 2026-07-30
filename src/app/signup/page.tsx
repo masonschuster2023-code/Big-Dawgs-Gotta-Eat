@@ -11,7 +11,9 @@ export default function SignupPage() {
     <div className="flex min-h-screen items-center justify-center px-4">
       <div className="w-full max-w-sm space-y-6">
         <div>
-          <h1 className="text-2xl font-semibold">Big Dawgs Gotta Eat</h1>
+          <h1 className="text-2xl font-bold">
+            Big Dawgs Gotta <span className="text-tennessee">Eat</span>
+          </h1>
           <p className="text-sm text-neutral-500">Create your account</p>
         </div>
 
@@ -49,7 +51,7 @@ export default function SignupPage() {
           <button
             type="submit"
             disabled={pending}
-            className="w-full rounded-md bg-neutral-900 px-3 py-2 text-sm font-medium text-white disabled:opacity-50 dark:bg-white dark:text-neutral-900"
+            className="w-full rounded-md bg-tennessee px-3 py-2 text-sm font-medium text-white transition-colors hover:bg-tennessee-dark disabled:opacity-50"
           >
             {pending ? "Signing up…" : "Sign up"}
           </button>
@@ -57,7 +59,7 @@ export default function SignupPage() {
 
         <p className="text-sm text-neutral-500">
           Already have an account?{" "}
-          <Link href="/login" className="font-medium underline">
+          <Link href="/login" className="font-medium text-tennessee hover:underline">
             Log in
           </Link>
         </p>

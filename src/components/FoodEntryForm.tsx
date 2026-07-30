@@ -16,11 +16,7 @@ export function FoodEntryForm({ date }: { date: string }) {
   }, [state]);
 
   return (
-    <form
-      ref={formRef}
-      action={formAction}
-      className="space-y-3 rounded-lg border border-neutral-200 p-4 dark:border-neutral-800"
-    >
+    <form ref={formRef} action={formAction} className="space-y-3">
       <input type="hidden" name="date" value={date} />
 
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
@@ -122,7 +118,7 @@ export function FoodEntryForm({ date }: { date: string }) {
       <button
         type="submit"
         disabled={pending}
-        className="rounded-md bg-neutral-900 px-3 py-1.5 text-sm font-medium text-white disabled:opacity-50 dark:bg-white dark:text-neutral-900"
+        className="rounded-lg bg-tennessee px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-tennessee-dark disabled:opacity-50"
       >
         {pending ? "Adding…" : "Add food"}
       </button>

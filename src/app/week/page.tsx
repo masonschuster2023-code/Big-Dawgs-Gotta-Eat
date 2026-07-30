@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { todayDate, getWeekStart, addDays } from "@/lib/date";
+import { Card } from "@/components/Card";
 
 const DAY_LABELS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 
@@ -85,20 +86,21 @@ export default async function WeekPage() {
   return (
     <div className="min-h-screen bg-zinc-50 dark:bg-black">
       <div className="mx-auto max-w-2xl px-4 py-8 sm:px-6">
-        <header className="mb-6 flex items-center justify-between">
+        <header className="mb-6 flex items-center justify-between rounded-2xl border border-black/5 bg-white/90 px-5 py-4 shadow-sm backdrop-blur-sm dark:border-white/10 dark:bg-neutral-900/80">
           <div>
-            <h1 className="text-xl font-semibold">This week</h1>
+            <h1 className="text-xl font-bold">This week</h1>
             <p className="text-sm text-neutral-500">
               {weekStart} – {weekEnd}
             </p>
           </div>
-          <Link href="/" className="text-sm font-medium underline">
+          <Link href="/" className="text-sm font-medium text-tennessee hover:underline">
             ← Today
           </Link>
         </header>
 
-        <div className="space-y-6">
-          <div className="overflow-x-auto rounded-lg border border-neutral-200 dark:border-neutral-800">
+        <div className="space-y-5">
+          <Card>
+            <div className="overflow-x-auto rounded-lg border border-neutral-200 dark:border-neutral-800">
             <table className="w-full min-w-[500px] text-sm">
               <thead>
                 <tr className="border-b border-neutral-200 text-left text-xs text-neutral-500 dark:border-neutral-800">
@@ -146,13 +148,12 @@ export default async function WeekPage() {
                 ))}
               </tbody>
             </table>
-          </div>
+            </div>
+          </Card>
 
-          <div className="rounded-lg border border-neutral-200 p-4 dark:border-neutral-800">
-            <h2 className="mb-3 text-sm font-medium text-neutral-500">
-              Weekly average ({countedDays.length} day{countedDays.length === 1 ? "" : "s"} counted)
-            </h2>
-
+          <Card
+            title={`Weekly average (${countedDays.length} day${countedDays.length === 1 ? "" : "s"} counted)`}
+          >
             {countedDays.length === 0 ? (
               <p className="text-sm text-neutral-400">
                 No days with a day type set yet this week — pick a day type on the daily log to see
@@ -193,7 +194,7 @@ export default async function WeekPage() {
                 {`${goingOutCount} going-out night${goingOutCount === 1 ? "" : "s"} this week — they aren't expected to hit the daily target, the plan already builds in room for them at the weekly level.`}
               </p>
             )}
-          </div>
+          </Card>
         </div>
       </div>
     </div>

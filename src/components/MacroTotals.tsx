@@ -50,7 +50,7 @@ export function MacroTotals({
   }
 
   return (
-    <div className="space-y-3 rounded-lg border border-neutral-200 p-4 dark:border-neutral-800">
+    <div className="space-y-3">
       <RangeBar
         label="Calories"
         value={totals.calories}
