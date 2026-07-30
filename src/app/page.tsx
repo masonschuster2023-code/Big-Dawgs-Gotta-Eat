@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { todayDate } from "@/lib/date";
 import { DayTypePicker } from "@/components/DayTypePicker";
@@ -71,6 +72,9 @@ export default async function Home() {
             <p className="text-sm text-neutral-500">{date}</p>
           </div>
           <div className="flex items-center gap-3">
+            <Link href="/week" className="text-sm font-medium underline">
+              This week →
+            </Link>
             <span className="text-sm text-neutral-500">{user?.email}</span>
             <form action={signOut}>
               <button type="submit" className="text-sm font-medium underline">
