@@ -3,6 +3,7 @@ import { todayDate } from "@/lib/date";
 import { DayTypePicker } from "@/components/DayTypePicker";
 import { MacroTotals } from "@/components/MacroTotals";
 import { FoodEntryForm } from "@/components/FoodEntryForm";
+import { FoodDatabaseSearch } from "@/components/FoodDatabaseSearch";
 import { DeleteFoodLogButton } from "@/components/DeleteFoodLogButton";
 import { signOut } from "@/app/auth/actions";
 
@@ -124,7 +125,12 @@ export default async function Home() {
           </div>
 
           <div>
-            <h2 className="mb-2 text-sm font-medium text-neutral-500">Add food</h2>
+            <h2 className="mb-2 text-sm font-medium text-neutral-500">Search food database</h2>
+            <FoodDatabaseSearch date={date} />
+          </div>
+
+          <div>
+            <h2 className="mb-2 text-sm font-medium text-neutral-500">Add food manually</h2>
             <FoodEntryForm date={date} />
           </div>
         </div>

@@ -50,6 +50,7 @@ export interface Database {
           name: string;
           source: FoodSource;
           barcode: string | null;
+          fdc_id: string | null;
           calories: number;
           protein: number;
           carbs: number;
