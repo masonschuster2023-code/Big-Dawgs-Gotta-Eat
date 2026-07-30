@@ -4,6 +4,7 @@ import { DayTypePicker } from "@/components/DayTypePicker";
 import { MacroTotals } from "@/components/MacroTotals";
 import { FoodEntryForm } from "@/components/FoodEntryForm";
 import { FoodDatabaseSearch } from "@/components/FoodDatabaseSearch";
+import { BarcodeScan } from "@/components/BarcodeScan";
 import { DeleteFoodLogButton } from "@/components/DeleteFoodLogButton";
 import { signOut } from "@/app/auth/actions";
 
@@ -122,6 +123,11 @@ export default async function Home() {
                 </div>
               ))}
             </div>
+          </div>
+
+          <div>
+            <h2 className="mb-2 text-sm font-medium text-neutral-500">Scan barcode</h2>
+            <BarcodeScan date={date} />
           </div>
 
           <div>
