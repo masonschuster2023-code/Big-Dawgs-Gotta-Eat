@@ -6,7 +6,7 @@ import { MacroTotals } from "@/components/MacroTotals";
 import { FoodEntryForm } from "@/components/FoodEntryForm";
 import { FoodDatabaseSearch } from "@/components/FoodDatabaseSearch";
 import { BarcodeScan } from "@/components/BarcodeScan";
-import { DeleteFoodLogButton } from "@/components/DeleteFoodLogButton";
+import { EditableFoodLogItem } from "@/components/EditableFoodLogItem";
 import { Card } from "@/components/Card";
 import { signOut } from "@/app/auth/actions";
 
@@ -119,20 +119,14 @@ export default async function Home() {
                   ) : (
                     <ul className="space-y-1">
                       {items.map((entry) => (
-                        <li
+                        <EditableFoodLogItem
                           key={entry.id}
-                          className="flex items-center justify-between rounded-lg bg-zinc-100 px-3 py-2 text-sm dark:bg-neutral-800"
-                        >
-                          <span>
-                            {entry.food?.name}
-                            {Number(entry.quantity) !== 1 ? ` ×${entry.quantity}` : ""}
-                            <span className="ml-2 text-neutral-400">
-                              {Math.round(Number(entry.food?.calories ?? 0) * Number(entry.quantity))}{" "}
-                              cal
-                            </span>
-                          </span>
-                          <DeleteFoodLogButton foodLogId={entry.id} />
-                        </li>
+                          id={entry.id}
+                          name={entry.food?.name ?? "Unknown food"}
+                          quantity={Number(entry.quantity)}
+                          meal={entry.meal}
+                          calories={Number(entry.food?.calories ?? 0) * Number(entry.quantity)}
+                        />
                       ))}
                     </ul>
                   )}

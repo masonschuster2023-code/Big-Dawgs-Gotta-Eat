@@ -76,3 +76,16 @@ export async function deleteFoodLog(foodLogId: string) {
   if (error) throw new Error(error.message);
   revalidatePath("/");
 }
+
+export async function updateFoodLog(foodLogId: string, quantity: number, meal: Meal) {
+  if (!(quantity > 0)) throw new Error("Quantity must be greater than 0");
+
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("food_logs")
+    .update({ quantity, meal })
+    .eq("id", foodLogId);
+
+  if (error) throw new Error(error.message);
+  revalidatePath("/");
+}
