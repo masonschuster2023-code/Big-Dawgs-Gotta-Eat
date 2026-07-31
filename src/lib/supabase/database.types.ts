@@ -68,6 +68,33 @@ export interface Database {
         Update: Partial<Database["public"]["Tables"]["foods"]["Row"]>;
         Relationships: [];
       };
+      food_catalog: {
+        Row: {
+          id: string;
+          fdc_id: string;
+          name: string;
+          brand: string | null;
+          serving_size: number | null;
+          serving_unit: string | null;
+          calories: number;
+          protein: number;
+          carbs: number;
+          fat: number;
+          source: "usda";
+          verified: boolean;
+          created_at: string;
+        };
+        Insert: Partial<Database["public"]["Tables"]["food_catalog"]["Row"]> & {
+          fdc_id: string;
+          name: string;
+          calories: number;
+          protein: number;
+          carbs: number;
+          fat: number;
+        };
+        Update: Partial<Database["public"]["Tables"]["food_catalog"]["Row"]>;
+        Relationships: [];
+      };
       food_overrides: {
         Row: {
           id: string;

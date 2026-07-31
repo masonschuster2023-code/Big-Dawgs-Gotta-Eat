@@ -1,31 +1,50 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { searchFoodDatabase, addSearchedFood } from "@/lib/actions/food-search";
-import type { FdcSearchResult } from "@/lib/fdc";
+import {
+  searchFoodDatabase,
+  addSearchResultToLog,
+  type FoodSearchResult,
+} from "@/lib/actions/food-search";
 import type { Meal } from "@/lib/supabase/database.types";
 
 const MEALS: Meal[] = ["breakfast", "lunch", "dinner", "snack"];
 
-function ResultRow({ date, result }: { date: string; result: FdcSearchResult }) {
-  const [grams, setGrams] = useState(100);
+const ORIGIN_LABEL: Record<FoodSearchResult["origin"], string> = {
+  recent: "Recently logged",
+  catalog: "From catalog",
+  usda: "From USDA",
+};
+
+function ResultRow({ date, result }: { date: string; result: FoodSearchResult }) {
+  // "recent" results carry whatever serving they were originally defined
+  // against — quantity is a generic multiplier, not necessarily grams.
+  // "catalog"/"usda" results are always per-100g, so grams is the natural unit.
+  const isPer100g = result.origin !== "recent";
+
+  const [amount, setAmount] = useState(isPer100g ? 100 : 1);
   const [meal, setMeal] = useState<Meal>("breakfast");
   const [added, setAdded] = useState(false);
   const [isPending, startTransition] = useTransition();
 
-  const factor = grams / 100;
+  const factor = isPer100g ? amount / 100 : amount;
 
   return (
     <li className="rounded-md border border-neutral-200 p-3 text-sm dark:border-neutral-800">
       <div className="flex items-start justify-between gap-2">
         <div>
-          <p className="font-medium">{result.description}</p>
+          <p className="font-medium">
+            {result.brand ? `${result.brand} — ${result.name}` : result.name}
+          </p>
+          <p className="text-xs text-neutral-400">{ORIGIN_LABEL[result.origin]}</p>
           <p className="text-xs text-neutral-500">
-            per 100g — {Math.round(result.calories)} cal · P{Math.round(result.protein)}g · C
+            {isPer100g ? "per 100g" : `per ${result.servingSize ?? "serving"}`} —{" "}
+            {Math.round(result.calories)} cal · P{Math.round(result.protein)}g · C
             {Math.round(result.carbs)}g · F{Math.round(result.fat)}g
           </p>
           <p className="text-xs text-neutral-400">
-            at {grams}g — {Math.round(result.calories * factor)} cal · P
+            at {amount}
+            {isPer100g ? "g" : "×"} — {Math.round(result.calories * factor)} cal · P
             {Math.round(result.protein * factor)}g · C{Math.round(result.carbs * factor)}g · F
             {Math.round(result.fat * factor)}g
           </p>
@@ -35,14 +54,14 @@ function ResultRow({ date, result }: { date: string; result: FdcSearchResult }) 
       <div className="mt-2 flex flex-wrap items-center gap-2">
         <input
           type="number"
-          value={grams}
-          min={1}
+          value={amount}
+          min={isPer100g ? 1 : 0.01}
           step="any"
-          onChange={(e) => setGrams(Number(e.target.value) || 0)}
+          onChange={(e) => setAmount(Number(e.target.value) || 0)}
           className="w-20 rounded-md border border-neutral-300 px-2 py-1 text-xs dark:border-neutral-700 dark:bg-neutral-900"
-          aria-label="Grams"
+          aria-label={isPer100g ? "Grams" : "Quantity"}
         />
-        <span className="text-xs text-neutral-500">g</span>
+        {isPer100g && <span className="text-xs text-neutral-500">g</span>}
 
         <select
           value={meal}
@@ -58,10 +77,10 @@ function ResultRow({ date, result }: { date: string; result: FdcSearchResult }) 
 
         <button
           type="button"
-          disabled={isPending || grams <= 0}
+          disabled={isPending || factor <= 0}
           onClick={() =>
             startTransition(async () => {
-              await addSearchedFood(date, meal, result.fdcId, result.description, grams);
+              await addSearchResultToLog(date, meal, result, factor);
               setAdded(true);
               setTimeout(() => setAdded(false), 1500);
             })
@@ -77,7 +96,7 @@ function ResultRow({ date, result }: { date: string; result: FdcSearchResult }) 
 
 export function FoodDatabaseSearch({ date }: { date: string }) {
   const [query, setQuery] = useState("");
-  const [results, setResults] = useState<FdcSearchResult[]>([]);
+  const [results, setResults] = useState<FoodSearchResult[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [hasSearched, setHasSearched] = useState(false);
   const [isSearching, startSearch] = useTransition();
@@ -121,8 +140,8 @@ export function FoodDatabaseSearch({ date }: { date: string }) {
 
       {results.length > 0 && (
         <ul className="space-y-2">
-          {results.map((result) => (
-            <ResultRow key={result.fdcId} date={date} result={result} />
+          {results.map((result, i) => (
+            <ResultRow key={result.personalFoodId ?? result.fdcId ?? i} date={date} result={result} />
           ))}
         </ul>
       )}
