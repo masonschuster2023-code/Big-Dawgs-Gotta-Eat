@@ -73,10 +73,10 @@ export async function searchFoodDatabase(
       .limit(RESULT_LIMIT);
 
     const catalog: FoodSearchResult[] = (catalogFoods ?? [])
-      .filter((f) => !seenFdcIds.has(f.fdc_id))
+      .filter((f) => !seenFdcIds.has(f.fdc_id ?? undefined))
       .map((f) => ({
         origin: "catalog",
-        fdcId: f.fdc_id,
+        fdcId: f.fdc_id ?? undefined,
         name: f.name,
         brand: f.brand,
         servingSize: f.serving_size ? `${f.serving_size} ${f.serving_unit ?? "g"}` : "100 g",

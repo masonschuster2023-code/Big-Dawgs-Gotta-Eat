@@ -6,6 +6,7 @@ import { MacroTotals } from "@/components/MacroTotals";
 import { FoodEntryForm } from "@/components/FoodEntryForm";
 import { FoodDatabaseSearch } from "@/components/FoodDatabaseSearch";
 import { BarcodeScan } from "@/components/BarcodeScan";
+import { PhotoFoodLog } from "@/components/PhotoFoodLog";
 import { EditableFoodLogItem } from "@/components/EditableFoodLogItem";
 import { Card } from "@/components/Card";
 import { signOut } from "@/app/auth/actions";
@@ -133,6 +134,10 @@ export default async function Home() {
                 </div>
               ))}
             </div>
+          </Card>
+
+          <Card title="Log from a photo">
+            <PhotoFoodLog date={date} />
           </Card>
 
           <Card title="Scan barcode">

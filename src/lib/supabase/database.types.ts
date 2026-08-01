@@ -1,4 +1,9 @@
-export type FoodSource = "manual" | "open_food_facts" | "database_search";
+export type FoodSource =
+  | "manual"
+  | "open_food_facts"
+  | "database_search"
+  | "photo_label"
+  | "photo_estimate";
 export type Meal = "breakfast" | "lunch" | "dinner" | "snack";
 
 export interface Database {
@@ -71,7 +76,7 @@ export interface Database {
       food_catalog: {
         Row: {
           id: string;
-          fdc_id: string;
+          fdc_id: string | null;
           name: string;
           brand: string | null;
           serving_size: number | null;
@@ -80,12 +85,11 @@ export interface Database {
           protein: number;
           carbs: number;
           fat: number;
-          source: "usda";
+          source: "usda" | "photo_label";
           verified: boolean;
           created_at: string;
         };
         Insert: Partial<Database["public"]["Tables"]["food_catalog"]["Row"]> & {
-          fdc_id: string;
           name: string;
           calories: number;
           protein: number;
