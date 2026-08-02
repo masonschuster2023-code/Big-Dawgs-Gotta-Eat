@@ -67,13 +67,7 @@ export default async function Home() {
   }));
 
   return (
-    <div className="relative min-h-screen">
-      <div
-        className="fixed inset-0 -z-20 bg-cover bg-center bg-fixed"
-        style={{ backgroundImage: "url(/home-bg.jpg)" }}
-      />
-      <div className="fixed inset-0 -z-10 bg-zinc-50/55 dark:bg-black/55" />
-
+    <div className="min-h-screen">
       <div className="mx-auto max-w-2xl px-4 py-8 sm:px-6">
         <header className="mb-6 flex items-center justify-between rounded-2xl border border-black/5 bg-white/90 px-5 py-4 shadow-sm backdrop-blur-sm dark:border-white/10 dark:bg-neutral-900/80">
           <div>
