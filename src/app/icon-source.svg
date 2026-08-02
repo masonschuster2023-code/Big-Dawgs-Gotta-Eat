@@ -1,28 +1,40 @@
 <svg width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
-  <!-- Background: brand orange, full bleed (OS applies its own corner mask) -->
   <rect width="512" height="512" fill="#ff8200"/>
 
-  <!-- Ears: small, set low at the sides (bulldog "rose ear"), drawn first so
-       the head covers most of each and only a rounded lobe peeks out -->
-  <ellipse cx="98" cy="234" rx="56" ry="68" fill="#d66d00" transform="rotate(-24 98 234)"/>
-  <ellipse cx="414" cy="234" rx="56" ry="68" fill="#d66d00" transform="rotate(24 414 234)"/>
+  <!-- Ears: black under-layer + smaller dark-orange top layer = bold outline -->
+  <ellipse cx="112" cy="150" rx="50" ry="62" fill="#000" transform="rotate(-18 112 150)"/>
+  <ellipse cx="400" cy="150" rx="50" ry="62" fill="#000" transform="rotate(18 400 150)"/>
+  <ellipse cx="112" cy="150" rx="36" ry="48" fill="#d66d00" transform="rotate(-18 112 150)"/>
+  <ellipse cx="400" cy="150" rx="36" ry="48" fill="#d66d00" transform="rotate(18 400 150)"/>
 
-  <!-- Head: wide and flat, not round — the defining bulldog proportion -->
-  <ellipse cx="256" cy="270" rx="192" ry="132" fill="#ffffff"/>
+  <!-- Head + jowls: black under-layer (union, no internal seams) -->
+  <ellipse cx="256" cy="228" rx="172" ry="150" fill="#000"/>
+  <ellipse cx="140" cy="348" rx="78" ry="82" fill="#000"/>
+  <ellipse cx="372" cy="348" rx="78" ry="82" fill="#000"/>
+  <!-- Orange top layer, uniformly inset -->
+  <ellipse cx="256" cy="228" rx="156" ry="134" fill="#ff8200"/>
+  <ellipse cx="140" cy="348" rx="63" ry="67" fill="#ff8200"/>
+  <ellipse cx="372" cy="348" rx="63" ry="67" fill="#ff8200"/>
 
-  <!-- Jowls: soft bumps flanking the mouth, broadening the lower face -->
-  <ellipse cx="140" cy="336" rx="50" ry="58" fill="#f5ead8"/>
-  <ellipse cx="372" cy="336" rx="50" ry="58" fill="#f5ead8"/>
+  <!-- Angry brows (bold angled bars double as brow+eye, classic mascot shorthand) -->
+  <rect x="130" y="185" width="110" height="36" rx="14" fill="#000" transform="rotate(-14 185 203)"/>
+  <rect x="272" y="185" width="110" height="36" rx="14" fill="#000" transform="rotate(14 327 203)"/>
+  <circle cx="196" cy="222" r="14" fill="#fff"/>
+  <circle cx="316" cy="222" r="14" fill="#fff"/>
 
-  <!-- Eyes -->
-  <circle cx="198" cy="252" r="20" fill="#1a1210"/>
-  <circle cx="314" cy="252" r="20" fill="#1a1210"/>
+  <!-- Nose -->
+  <ellipse cx="256" cy="272" rx="46" ry="34" fill="#000"/>
 
-  <!-- Nose: wide and flat -->
-  <ellipse cx="256" cy="300" rx="42" ry="30" fill="#1a1210"/>
+  <!-- Open snarling mouth -->
+  <ellipse cx="256" cy="356" rx="112" ry="46" fill="#000"/>
+  <polygon points="196,320 218,320 207,352" fill="#fff"/>
+  <polygon points="294,320 316,320 305,352" fill="#fff"/>
 
-  <!-- Steak: a wedge, not a bar — tapered shape plus a bone nub is what
-       actually reads as "meat" rather than "stick" at tiny size -->
-  <path d="M 118 372 L 420 358 Q 444 400 420 444 L 118 424 Q 100 398 118 372 Z" fill="#8a4a2b"/>
-  <ellipse cx="112" cy="398" rx="28" ry="36" fill="#f4e8d8"/>
+  <!-- Steak, gripped at the mouth -->
+  <path d="M 120 366 L 410 350 Q 436 396 410 442 L 120 420 Q 100 396 120 366 Z"
+        fill="#8a4a2b" stroke="#000" stroke-width="14" stroke-linejoin="round"/>
+  <ellipse cx="112" cy="392" rx="26" ry="34" fill="#f4e8d8" stroke="#000" stroke-width="12"/>
+  <!-- Bite taken out: a bg-colored circle "stamped" over the top edge,
+       outlined to match, reads clearly at small size unlike a subtle notch -->
+  <circle cx="230" cy="352" r="34" fill="#ff8200" stroke="#000" stroke-width="14"/>
 </svg>
