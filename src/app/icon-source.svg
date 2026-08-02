@@ -1,40 +1,55 @@
 <svg width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
   <rect width="512" height="512" fill="#ff8200"/>
 
-  <!-- Ears: black under-layer + smaller dark-orange top layer = bold outline -->
-  <ellipse cx="112" cy="150" rx="50" ry="62" fill="#000" transform="rotate(-18 112 150)"/>
-  <ellipse cx="400" cy="150" rx="50" ry="62" fill="#000" transform="rotate(18 400 150)"/>
-  <ellipse cx="112" cy="150" rx="36" ry="48" fill="#d66d00" transform="rotate(-18 112 150)"/>
-  <ellipse cx="400" cy="150" rx="36" ry="48" fill="#d66d00" transform="rotate(18 400 150)"/>
+  <!-- Ears -->
+  <ellipse cx="100" cy="120" rx="50" ry="62" fill="#000" transform="rotate(-16 100 120)"/>
+  <ellipse cx="412" cy="120" rx="50" ry="62" fill="#000" transform="rotate(16 412 120)"/>
+  <ellipse cx="100" cy="120" rx="37" ry="49" fill="#d66d00" transform="rotate(-16 100 120)"/>
+  <ellipse cx="412" cy="120" rx="37" ry="49" fill="#d66d00" transform="rotate(16 412 120)"/>
 
-  <!-- Head + jowls: black under-layer (union, no internal seams) -->
-  <ellipse cx="256" cy="228" rx="172" ry="150" fill="#000"/>
-  <ellipse cx="140" cy="348" rx="78" ry="82" fill="#000"/>
-  <ellipse cx="372" cy="348" rx="78" ry="82" fill="#000"/>
-  <!-- Orange top layer, uniformly inset -->
-  <ellipse cx="256" cy="228" rx="156" ry="134" fill="#ff8200"/>
-  <ellipse cx="140" cy="348" rx="63" ry="67" fill="#ff8200"/>
-  <ellipse cx="372" cy="348" rx="63" ry="67" fill="#ff8200"/>
+  <!-- Cranium: flat-topped, not tall -->
+  <ellipse cx="256" cy="160" rx="155" ry="95" fill="#000"/>
+  <ellipse cx="256" cy="160" rx="139" ry="79" fill="#ff8200"/>
 
-  <!-- Angry brows (bold angled bars double as brow+eye, classic mascot shorthand) -->
-  <rect x="130" y="185" width="110" height="36" rx="14" fill="#000" transform="rotate(-14 185 203)"/>
-  <rect x="272" y="185" width="110" height="36" rx="14" fill="#000" transform="rotate(14 327 203)"/>
-  <circle cx="196" cy="222" r="14" fill="#fff"/>
-  <circle cx="316" cy="222" r="14" fill="#fff"/>
+  <!-- Jaw: a single wide block, deliberately WIDER than the cranium above it
+       — that width jump is what actually reads as "bulldog" vs. "bear" -->
+  <rect x="40" y="182" width="432" height="188" rx="94" fill="#000"/>
+  <rect x="54" y="196" width="404" height="160" rx="80" fill="#ff8200"/>
 
-  <!-- Nose -->
-  <ellipse cx="256" cy="272" rx="46" ry="34" fill="#000"/>
+  <!-- Heavy angry brows -->
+  <rect x="118" y="136" width="110" height="38" rx="15" fill="#000" transform="rotate(-15 173 155)"/>
+  <rect x="284" y="136" width="110" height="38" rx="15" fill="#000" transform="rotate(15 339 155)"/>
+  <circle cx="178" cy="174" r="14" fill="#fff"/>
+  <circle cx="334" cy="174" r="14" fill="#fff"/>
 
-  <!-- Open snarling mouth -->
-  <ellipse cx="256" cy="356" rx="112" ry="46" fill="#000"/>
-  <polygon points="196,320 218,320 207,352" fill="#fff"/>
-  <polygon points="294,320 316,320 305,352" fill="#fff"/>
+  <!-- Nose: big, flat, short snout -->
+  <ellipse cx="256" cy="206" rx="52" ry="38" fill="#000"/>
 
-  <!-- Steak, gripped at the mouth -->
-  <path d="M 120 366 L 410 350 Q 436 396 410 442 L 120 420 Q 100 396 120 366 Z"
-        fill="#8a4a2b" stroke="#000" stroke-width="14" stroke-linejoin="round"/>
-  <ellipse cx="112" cy="392" rx="26" ry="34" fill="#f4e8d8" stroke="#000" stroke-width="12"/>
-  <!-- Bite taken out: a bg-colored circle "stamped" over the top edge,
-       outlined to match, reads clearly at small size unlike a subtle notch -->
-  <circle cx="230" cy="352" r="34" fill="#ff8200" stroke="#000" stroke-width="14"/>
+  <!-- Mouth cavity, mostly hidden behind the steak -->
+  <ellipse cx="256" cy="286" rx="110" ry="44" fill="#000"/>
+
+  <!-- Underbite tusks: bulldog lower fangs point UP, tips well clear of the
+       steak below so they don't merge with it at small size -->
+  <polygon points="178,322 226,322 200,222" fill="#fff" stroke="#000" stroke-width="12" stroke-linejoin="round"/>
+  <polygon points="286,322 334,322 312,222" fill="#fff" stroke="#000" stroke-width="12" stroke-linejoin="round"/>
+
+  <!-- Bone: two round knobs + a connecting shaft, drawn UNDER the steak so
+       one knob tucks into the meat and one pokes out clear of it -->
+  <rect x="70" y="278" width="110" height="46" rx="23" fill="#f4e8d8" stroke="#000" stroke-width="12"/>
+  <circle cx="76" cy="301" r="34" fill="#f4e8d8" stroke="#000" stroke-width="12"/>
+  <circle cx="168" cy="301" r="28" fill="#f4e8d8" stroke="#000" stroke-width="12"/>
+
+  <!-- Steak: simple rounded wedge, wider at the bitten end. Kept short
+       vertically so it can't collide with the collar spikes below. -->
+  <path d="M 160 296 Q 300 282 412 302 Q 438 332 412 366 Q 300 384 162 372
+           Q 140 336 160 296 Z"
+        fill="#a5502e" stroke="#000" stroke-width="16" stroke-linejoin="round"/>
+
+  <!-- Collar: fewer, much bigger spikes — small ones vanished at real size.
+       Pushed down clear of the steak's bottom edge. -->
+  <polygon points="129,440 189,440 159,378" fill="#d66d00" stroke="#000" stroke-width="12" stroke-linejoin="round"/>
+  <polygon points="226,440 286,440 256,378" fill="#d66d00" stroke="#000" stroke-width="12" stroke-linejoin="round"/>
+  <polygon points="323,440 383,440 353,378" fill="#d66d00" stroke="#000" stroke-width="12" stroke-linejoin="round"/>
+  <rect x="76" y="440" width="360" height="54" rx="24" fill="#1a1210" stroke="#000" stroke-width="10"/>
+  <circle cx="256" cy="467" r="23" fill="#ff8200" stroke="#000" stroke-width="10"/>
 </svg>
