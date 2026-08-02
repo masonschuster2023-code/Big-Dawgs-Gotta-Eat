@@ -7,8 +7,10 @@ import {
   updateMealItemQuantity,
   deleteMealItem,
   deleteMeal,
+  addMealItem,
   type SavedMeal,
 } from "@/lib/actions/meals";
+import { searchFoodDatabase, type FoodSearchResult } from "@/lib/actions/food-search";
 import type { Meal } from "@/lib/supabase/database.types";
 
 type Mode = "collapsed" | "log" | "edit";
@@ -31,6 +33,13 @@ export function SavedMealItem({
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
 
+  const [isAddingItem, setIsAddingItem] = useState(false);
+  const [addQuery, setAddQuery] = useState("");
+  const [addResults, setAddResults] = useState<FoodSearchResult[]>([]);
+  const [addQuantities, setAddQuantities] = useState<Record<number, number>>({});
+  const [addError, setAddError] = useState<string | null>(null);
+  const [isSearchingAdd, startSearchAdd] = useTransition();
+
   const totalCalories = savedMeal.items.reduce((sum, i) => sum + i.calories * i.quantity, 0);
 
   const openLog = () => {
@@ -43,6 +52,10 @@ export function SavedMealItem({
     setEditTitle(savedMeal.title);
     setEditQuantities(Object.fromEntries(savedMeal.items.map((i) => [i.id, i.quantity])));
     setError(null);
+    setIsAddingItem(false);
+    setAddQuery("");
+    setAddResults([]);
+    setAddError(null);
     setMode("edit");
   };
 
@@ -91,6 +104,33 @@ export function SavedMealItem({
     startTransition(async () => {
       await deleteMeal(savedMeal.id);
       onChanged();
+    });
+  };
+
+  const runAddSearch = () => {
+    setAddError(null);
+    startSearchAdd(async () => {
+      const res = await searchFoodDatabase(addQuery);
+      if (res.error) setAddError(res.error);
+      setAddResults(res.results ?? []);
+      setAddQuantities({});
+    });
+  };
+
+  const addItemToMeal = (index: number) => {
+    const result = addResults[index];
+    const rawQty = addQuantities[index] ?? (result.origin === "recent" ? 1 : 100);
+    const quantity = result.origin === "recent" ? rawQty : rawQty / 100;
+
+    setAddError(null);
+    startTransition(async () => {
+      try {
+        await addMealItem(savedMeal.id, result, quantity);
+        setAddResults((prev) => prev.filter((_, i) => i !== index));
+        onChanged();
+      } catch (err) {
+        setAddError(err instanceof Error ? err.message : "Could not add item");
+      }
     });
   };
 
@@ -226,6 +266,90 @@ export function SavedMealItem({
           </li>
         ))}
       </ul>
+
+      {isAddingItem ? (
+        <div className="space-y-2 border-t border-neutral-200 pt-2 dark:border-neutral-800">
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              if (addQuery.trim()) runAddSearch();
+            }}
+            className="flex gap-2"
+          >
+            <input
+              type="text"
+              value={addQuery}
+              onChange={(e) => setAddQuery(e.target.value)}
+              placeholder="Search foods to add…"
+              className="flex-1 rounded-md border border-neutral-300 px-2 py-1.5 text-xs dark:border-neutral-700 dark:bg-neutral-900"
+            />
+            <button
+              type="submit"
+              disabled={isSearchingAdd}
+              className="rounded-md bg-tennessee px-2 py-1 text-xs font-medium text-white transition-colors hover:bg-tennessee-dark disabled:opacity-50"
+            >
+              {isSearchingAdd ? "Searching…" : "Search"}
+            </button>
+          </form>
+
+          {addError && <p className="text-xs text-red-600">{addError}</p>}
+
+          {addResults.length > 0 && (
+            <ul className="space-y-1">
+              {addResults.map((r, i) => (
+                <li
+                  key={r.personalFoodId ?? r.fdcId ?? i}
+                  className="flex items-center justify-between gap-2 rounded-md border border-neutral-200 px-2 py-1 dark:border-neutral-800"
+                >
+                  <div className="flex-1">
+                    <p>{r.brand ? `${r.brand} — ${r.name}` : r.name}</p>
+                    <p className="text-xs text-neutral-400">
+                      {Math.round(r.calories)} cal · P{Math.round(r.protein)}g · C
+                      {Math.round(r.carbs)}g · F{Math.round(r.fat)}g{" "}
+                      {r.origin === "recent" ? `per ${r.servingSize ?? "serving"}` : "per 100g"}
+                    </p>
+                  </div>
+                  <input
+                    type="number"
+                    step="any"
+                    value={addQuantities[i] ?? (r.origin === "recent" ? 1 : 100)}
+                    onChange={(e) =>
+                      setAddQuantities((prev) => ({ ...prev, [i]: Number(e.target.value) || 0 }))
+                    }
+                    className="w-14 rounded-md border border-neutral-300 px-1 py-0.5 text-xs dark:border-neutral-700 dark:bg-neutral-900"
+                    aria-label={`Quantity for ${r.name}`}
+                  />
+                  {r.origin !== "recent" && <span className="text-xs text-neutral-500">g</span>}
+                  <button
+                    type="button"
+                    disabled={isPending}
+                    onClick={() => addItemToMeal(i)}
+                    className="rounded-md bg-tennessee px-2 py-1 text-xs font-medium text-white transition-colors hover:bg-tennessee-dark disabled:opacity-50"
+                  >
+                    Add
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
+
+          <button
+            type="button"
+            onClick={() => setIsAddingItem(false)}
+            className="text-xs text-neutral-500 hover:underline"
+          >
+            Done adding
+          </button>
+        </div>
+      ) : (
+        <button
+          type="button"
+          onClick={() => setIsAddingItem(true)}
+          className="text-xs text-tennessee hover:underline"
+        >
+          + Add item
+        </button>
+      )}
 
       <div className="flex flex-wrap gap-2 pt-1">
         <button

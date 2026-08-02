@@ -95,6 +95,41 @@ export async function createMeal(
   revalidatePath("/log");
 }
 
+// Adds a new item to an existing saved meal template (not a logged
+// instance) — edit mode needs to be able to grow a meal, not just adjust
+// or remove what's already there.
+export async function addMealItem(mealId: string, result: FoodSearchResult, quantity: number) {
+  if (!(quantity > 0)) throw new Error("Quantity must be greater than 0");
+
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) throw new Error("Not authenticated");
+
+  // Belt-and-suspenders ownership check alongside RLS: confirms the meal is
+  // both real and this user's before resolving/inserting anything.
+  const { data: meal } = await supabase
+    .from("meals")
+    .select("id")
+    .eq("id", mealId)
+    .eq("user_id", user.id)
+    .maybeSingle();
+  if (!meal) throw new Error("Meal not found");
+
+  const foodId = await resolveFoodId(supabase, user.id, result);
+
+  const { error } = await supabase.from("meal_items").insert({
+    meal_id: mealId,
+    food_id: foodId,
+    quantity,
+  });
+
+  if (error) throw new Error(error.message);
+
+  revalidatePath("/log");
+}
+
 export async function updateMealTitle(mealId: string, title: string) {
   const trimmed = title.trim();
   if (!trimmed) throw new Error("Title can't be empty");
