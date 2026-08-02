@@ -1,25 +1,22 @@
 <svg width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
   <rect width="512" height="512" fill="#ff8200"/>
 
-  <!-- Bone: black under-layer (knuckles + rounded shaft) then white
-       over-layer, inset, for a bold outline with no internal seams -->
+  <!-- Bone built from capsule (stadium) shapes only — no straight-edge
+       rectangle meeting a circle, so there's no sharp-corner seam anywhere.
+       Black under-layer, white over-layer inset ~13px = bold outline. -->
   <g fill="#000">
-    <circle cx="104" cy="180" r="68"/>
-    <circle cx="104" cy="332" r="68"/>
-    <circle cx="408" cy="180" r="68"/>
-    <circle cx="408" cy="332" r="68"/>
-    <rect x="104" y="206" width="304" height="100" rx="20"/>
+    <rect x="43" y="142" width="130" height="228" rx="65"/>
+    <rect x="339" y="142" width="130" height="228" rx="65"/>
+    <rect x="100" y="208" width="312" height="96" rx="48"/>
   </g>
   <g fill="#ffffff">
-    <circle cx="104" cy="180" r="55"/>
-    <circle cx="104" cy="332" r="55"/>
-    <circle cx="408" cy="180" r="55"/>
-    <circle cx="408" cy="332" r="55"/>
-    <rect x="106" y="220" width="300" height="72" rx="14"/>
+    <rect x="56" y="155" width="104" height="202" rx="52"/>
+    <rect x="352" y="155" width="104" height="202" rx="52"/>
+    <rect x="113" y="221" width="286" height="70" rx="35"/>
   </g>
 
   <!-- BD, bold and centered in the shaft -->
-  <text x="256" y="282" text-anchor="middle"
+  <text x="256" y="280" text-anchor="middle"
         font-family="Arial, Helvetica, sans-serif" font-weight="800"
-        font-size="94" fill="#1a1210">BD</text>
+        font-size="88" fill="#1a1210">BD</text>
 </svg>
