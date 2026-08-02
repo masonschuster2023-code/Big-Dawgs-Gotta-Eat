@@ -1,12 +1,10 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
+  /* Plain near-white with a faint Tennessee-orange tint instead of pure
+     white — no pattern, no gradient, just a quiet flat color. */
+  --background: color-mix(in srgb, var(--color-tennessee) 3%, white);
   --foreground: #171717;
-  /* Faint Tennessee-orange dot grid — the app-wide default background.
-     Kept deliberately quiet: it only reads in the gaps around cards, never
-     under them, since every card has its own solid/near-solid background. */
-  --bg-dot-color: color-mix(in srgb, var(--color-tennessee) 12%, transparent);
 }
 
 @theme inline {
@@ -21,18 +19,15 @@
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0a0a0a;
+    /* Same idea, stronger mix — the same 3% reads as nothing against
+       near-black. */
+    --background: color-mix(in srgb, var(--color-tennessee) 6%, #0a0a0a);
     --foreground: #ededed;
-    /* Slightly stronger than light mode — the same opacity reads as almost
-       nothing against near-black. */
-    --bg-dot-color: color-mix(in srgb, var(--color-tennessee) 18%, transparent);
   }
 }
 
 body {
   background-color: var(--background);
-  background-image: radial-gradient(circle, var(--bg-dot-color) 1px, transparent 1px);
-  background-size: 24px 24px;
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
