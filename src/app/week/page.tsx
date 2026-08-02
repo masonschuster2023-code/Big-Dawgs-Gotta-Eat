@@ -84,7 +84,7 @@ export default async function WeekPage() {
   };
 
   return (
-    <div className="min-h-screen bg-zinc-50 dark:bg-black">
+    <div className="min-h-screen">
       <div className="mx-auto max-w-2xl px-4 py-8 sm:px-6">
         <header className="mb-6 flex items-center justify-between rounded-2xl border border-black/5 bg-white/90 px-5 py-4 shadow-sm backdrop-blur-sm dark:border-white/10 dark:bg-neutral-900/80">
           <div>

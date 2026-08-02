@@ -3,6 +3,10 @@
 :root {
   --background: #ffffff;
   --foreground: #171717;
+  /* Faint Tennessee-orange dot grid — the app-wide default background.
+     Kept deliberately quiet: it only reads in the gaps around cards, never
+     under them, since every card has its own solid/near-solid background. */
+  --bg-dot-color: color-mix(in srgb, var(--color-tennessee) 12%, transparent);
 }
 
 @theme inline {
@@ -19,11 +23,16 @@
   :root {
     --background: #0a0a0a;
     --foreground: #ededed;
+    /* Slightly stronger than light mode — the same opacity reads as almost
+       nothing against near-black. */
+    --bg-dot-color: color-mix(in srgb, var(--color-tennessee) 18%, transparent);
   }
 }
 
 body {
-  background: var(--background);
+  background-color: var(--background);
+  background-image: radial-gradient(circle, var(--bg-dot-color) 1px, transparent 1px);
+  background-size: 24px 24px;
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
