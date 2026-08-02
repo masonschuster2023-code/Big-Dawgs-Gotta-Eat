@@ -7,6 +7,7 @@ import { MacroBreakdown } from "@/components/MacroBreakdown";
 import { DiaryMealCard } from "@/components/DiaryMealCard";
 import { Card } from "@/components/Card";
 import { signOut } from "@/app/auth/actions";
+import { getProfile } from "@/lib/actions/profile";
 import type { Meal } from "@/lib/supabase/database.types";
 
 const MEAL_ORDER: Meal[] = ["breakfast", "lunch", "dinner", "snack"];
@@ -25,13 +26,10 @@ export default async function Home() {
 
   const date = todayDate();
 
-  const [{ data: dayTypes }, { data: dailyLog }] = await Promise.all([
+  const [{ data: dayTypes }, { data: dailyLog }, { profile }] = await Promise.all([
     supabase.from("day_types").select("*").order("calorie_min", { ascending: false }),
-    supabase
-      .from("daily_logs")
-      .select("*, day_type:day_types(*)")
-      .eq("date", date)
-      .maybeSingle(),
+    supabase.from("daily_logs").select("*").eq("date", date).maybeSingle(),
+    getProfile(),
   ]);
 
   const { data: foodLogs } = dailyLog
@@ -43,7 +41,6 @@ export default async function Home() {
     : { data: [] };
 
   const entries = foodLogs ?? [];
-  const dayType = dailyLog?.day_type ?? null;
 
   // Live-computed from food_logs on every render — same totals logic as
   // before, nothing cached, so there's no staleness to manage after edits.
@@ -80,6 +77,9 @@ export default async function Home() {
             <Link href="/week" className="text-sm font-medium text-tennessee hover:underline">
               This week →
             </Link>
+            <Link href="/settings" className="text-sm font-medium text-tennessee hover:underline">
+              Settings
+            </Link>
             <span className="hidden text-sm text-neutral-500 sm:inline">{user?.email}</span>
             <form action={signOut}>
               <button type="submit" className="text-sm font-medium text-neutral-500 hover:underline">
@@ -100,15 +100,23 @@ export default async function Home() {
           </Card>
 
           <Card title="Today">
-            {dayType ? (
+            {profile ? (
               <div className="space-y-5">
-                <CalorieProgress consumed={totals.calories} goal={dayType.calorie_max} />
+                <CalorieProgress consumed={totals.calories} goal={profile.calories} />
                 <div className="border-t border-neutral-200 pt-4 dark:border-neutral-800">
-                  <MacroBreakdown dayType={dayType} totals={totals} />
+                  <MacroBreakdown
+                    targets={{ carbs: profile.carbs, fat: profile.fat, protein: profile.protein }}
+                    totals={totals}
+                  />
                 </div>
               </div>
             ) : (
-              <p className="text-sm text-neutral-400">Pick a day type above to see your targets.</p>
+              <p className="text-sm text-neutral-400">
+                <Link href="/settings" className="text-tennessee underline">
+                  Set up your goals
+                </Link>{" "}
+                to see your targets.
+              </p>
             )}
           </Card>
 

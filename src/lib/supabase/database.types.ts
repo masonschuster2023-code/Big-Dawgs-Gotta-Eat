@@ -5,6 +5,9 @@ export type FoodSource =
   | "photo_label"
   | "photo_estimate";
 export type Meal = "breakfast" | "lunch" | "dinner" | "snack";
+export type Sex = "male" | "female";
+export type ActivityLevel = "sedentary" | "lightly_active" | "moderately_active" | "very_active";
+export type Goal = "maintain" | "lose" | "gain";
 
 export interface Database {
   public: {
@@ -191,6 +194,38 @@ export interface Database {
             isOneToOne: false;
           },
         ];
+      };
+      profiles: {
+        Row: {
+          user_id: string;
+          sex: Sex;
+          weight_lb: number;
+          height_in: number;
+          age: number;
+          activity_level: ActivityLevel;
+          goal: Goal;
+          calories: number;
+          protein: number;
+          carbs: number;
+          fat: number;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: Partial<Database["public"]["Tables"]["profiles"]["Row"]> & {
+          user_id: string;
+          sex: Sex;
+          weight_lb: number;
+          height_in: number;
+          age: number;
+          activity_level: ActivityLevel;
+          goal: Goal;
+          calories: number;
+          protein: number;
+          carbs: number;
+          fat: number;
+        };
+        Update: Partial<Database["public"]["Tables"]["profiles"]["Row"]>;
+        Relationships: [];
       };
     };
     Views: Record<string, never>;

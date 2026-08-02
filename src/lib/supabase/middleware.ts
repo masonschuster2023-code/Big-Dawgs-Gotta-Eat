@@ -43,5 +43,21 @@ export async function updateSession(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
+  // Gate the rest of the app behind goal setup — /settings doubles as the
+  // onboarding flow for a user with no profile row yet, so it's exempt.
+  if (user && !isPublicPath && request.nextUrl.pathname !== "/settings") {
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("user_id")
+      .eq("user_id", user.id)
+      .maybeSingle();
+
+    if (!profile) {
+      const url = request.nextUrl.clone();
+      url.pathname = "/settings";
+      return NextResponse.redirect(url);
+    }
+  }
+
   return response;
 }

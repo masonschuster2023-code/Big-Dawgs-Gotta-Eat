@@ -1,7 +1,3 @@
-import type { Database } from "@/lib/supabase/database.types";
-
-type DayType = Database["public"]["Tables"]["day_types"]["Row"];
-
 function MacroRow({ label, consumed, target }: { label: string; consumed: number; target: number }) {
   const pct = target > 0 ? Math.min(100, (consumed / target) * 100) : 0;
   const over = consumed > target;
@@ -25,23 +21,21 @@ function MacroRow({ label, consumed, target }: { label: string; consumed: number
 }
 
 export function MacroBreakdown({
-  dayType,
+  targets,
   totals,
 }: {
-  dayType: DayType | null;
+  targets: { carbs: number; fat: number; protein: number } | null;
   totals: { carbs: number; fat: number; protein: number };
 }) {
-  if (!dayType) {
-    return (
-      <p className="text-sm text-neutral-400">Pick a day type above to see your macro targets.</p>
-    );
+  if (!targets) {
+    return <p className="text-sm text-neutral-400">Set up your goals to see macro targets.</p>;
   }
 
   return (
     <div className="space-y-3">
-      <MacroRow label="Carbs" consumed={totals.carbs} target={dayType.carb_max} />
-      <MacroRow label="Fat" consumed={totals.fat} target={dayType.fat_g} />
-      <MacroRow label="Protein" consumed={totals.protein} target={dayType.protein_g} />
+      <MacroRow label="Carbs" consumed={totals.carbs} target={targets.carbs} />
+      <MacroRow label="Fat" consumed={totals.fat} target={targets.fat} />
+      <MacroRow label="Protein" consumed={totals.protein} target={targets.protein} />
     </div>
   );
 }
