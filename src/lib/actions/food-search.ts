@@ -193,6 +193,51 @@ export async function getMyFoods(): Promise<{ results?: FoodSearchResult[]; erro
   };
 }
 
+// Resolves any FoodSearchResult to a row in the user's personal foods
+// table, creating one if needed. This is the one true way anything in this
+// app turns a search hit into something food_logs (or meal_items) can
+// reference — food_logs.food_id is a plain FK to foods, no discriminator,
+// so catalog/USDA hits always get resolved into a personal row before
+// anything gets persisted. Reused by addSearchResultToLog and by the
+// meals actions so meal_items follows the exact same pattern.
+export async function resolveFoodId(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  userId: string,
+  result: FoodSearchResult,
+): Promise<string> {
+  if (result.personalFoodId) return result.personalFoodId;
+
+  if (!result.fdcId) throw new Error("Missing food reference");
+
+  const { data: existing } = await supabase
+    .from("foods")
+    .select("id")
+    .eq("user_id", userId)
+    .eq("fdc_id", result.fdcId)
+    .maybeSingle();
+
+  if (existing) return existing.id;
+
+  const { data: food, error: foodError } = await supabase
+    .from("foods")
+    .insert({
+      user_id: userId,
+      name: result.brand ? `${result.brand} — ${result.name}` : result.name,
+      source: "database_search",
+      fdc_id: result.fdcId,
+      calories: result.calories,
+      protein: result.protein,
+      carbs: result.carbs,
+      fat: result.fat,
+      serving_size: result.servingSize ?? "100 g",
+    })
+    .select("id")
+    .single();
+
+  if (foodError || !food) throw new Error(foodError?.message ?? "Could not save food");
+  return food.id;
+}
+
 export async function addSearchResultToLog(
   date: string,
   meal: Meal,
@@ -207,41 +252,7 @@ export async function addSearchResultToLog(
   } = await supabase.auth.getUser();
   if (!user) throw new Error("Not authenticated");
 
-  let foodId = result.personalFoodId;
-
-  if (!foodId) {
-    if (!result.fdcId) throw new Error("Missing food reference");
-
-    const { data: existing } = await supabase
-      .from("foods")
-      .select("id")
-      .eq("user_id", user.id)
-      .eq("fdc_id", result.fdcId)
-      .maybeSingle();
-
-    if (existing) {
-      foodId = existing.id;
-    } else {
-      const { data: food, error: foodError } = await supabase
-        .from("foods")
-        .insert({
-          user_id: user.id,
-          name: result.brand ? `${result.brand} — ${result.name}` : result.name,
-          source: "database_search",
-          fdc_id: result.fdcId,
-          calories: result.calories,
-          protein: result.protein,
-          carbs: result.carbs,
-          fat: result.fat,
-          serving_size: result.servingSize ?? "100 g",
-        })
-        .select("id")
-        .single();
-
-      if (foodError || !food) throw new Error(foodError?.message ?? "Could not save food");
-      foodId = food.id;
-    }
-  }
+  const foodId = await resolveFoodId(supabase, user.id, result);
 
   const { data: dailyLog, error: dailyLogError } = await supabase
     .from("daily_logs")

@@ -149,6 +149,49 @@ export interface Database {
           },
         ];
       };
+      meals: {
+        Row: {
+          id: string;
+          user_id: string;
+          title: string;
+          created_at: string;
+        };
+        Insert: Partial<Database["public"]["Tables"]["meals"]["Row"]> & {
+          title: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["meals"]["Row"]>;
+        Relationships: [];
+      };
+      meal_items: {
+        Row: {
+          id: string;
+          meal_id: string;
+          food_id: string;
+          quantity: number;
+          created_at: string;
+        };
+        Insert: Partial<Database["public"]["Tables"]["meal_items"]["Row"]> & {
+          meal_id: string;
+          food_id: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["meal_items"]["Row"]>;
+        Relationships: [
+          {
+            foreignKeyName: "meal_items_meal_id_fkey";
+            columns: ["meal_id"];
+            referencedRelation: "meals";
+            referencedColumns: ["id"];
+            isOneToOne: false;
+          },
+          {
+            foreignKeyName: "meal_items_food_id_fkey";
+            columns: ["food_id"];
+            referencedRelation: "foods";
+            referencedColumns: ["id"];
+            isOneToOne: false;
+          },
+        ];
+      };
     };
     Views: Record<string, never>;
     Functions: Record<string, never>;

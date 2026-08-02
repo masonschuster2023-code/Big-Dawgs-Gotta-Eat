@@ -7,10 +7,13 @@ import {
   getMyFoods,
   type FoodSearchResult,
 } from "@/lib/actions/food-search";
+import { getMyMeals, type SavedMeal } from "@/lib/actions/meals";
 import { FoodResultRow } from "@/components/FoodResultRow";
 import { BarcodeScan } from "@/components/BarcodeScan";
 import { PhotoFoodLog } from "@/components/PhotoFoodLog";
 import { FoodEntryForm } from "@/components/FoodEntryForm";
+import { MealBuilder } from "@/components/MealBuilder";
+import { SavedMealItem } from "@/components/SavedMealItem";
 import type { Meal } from "@/lib/supabase/database.types";
 
 type Tab = "history" | "my-meals" | "my-foods";
@@ -41,10 +44,13 @@ export function FoodLoggingScreen({ date, meal }: { date: string; meal: Meal }) 
 
   const [recent, setRecent] = useState<FoodSearchResult[] | null>(null);
   const [myFoods, setMyFoods] = useState<FoodSearchResult[] | null>(null);
+  const [myMeals, setMyMeals] = useState<SavedMeal[] | null>(null);
+  const [isBuildingMeal, setIsBuildingMeal] = useState(false);
   const [isLoadingTab, startLoadTab] = useTransition();
 
   const loadRecent = () => startLoadTab(async () => setRecent((await getRecentFoods()).results ?? []));
   const loadMyFoods = () => startLoadTab(async () => setMyFoods((await getMyFoods()).results ?? []));
+  const loadMyMeals = () => startLoadTab(async () => setMyMeals((await getMyMeals()).meals ?? []));
 
   useEffect(() => {
     loadRecent();
@@ -52,6 +58,7 @@ export function FoodLoggingScreen({ date, meal }: { date: string; meal: Meal }) 
 
   useEffect(() => {
     if (tab === "my-foods" && myFoods === null) loadMyFoods();
+    if (tab === "my-meals" && myMeals === null) loadMyMeals();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tab]);
 
@@ -204,11 +211,47 @@ export function FoodLoggingScreen({ date, meal }: { date: string; meal: Meal }) 
               </ul>
             ))}
 
-          {tab === "my-meals" && (
-            <p className="text-sm text-neutral-400">
-              No saved meals yet. Saving a combination of foods as a reusable meal is coming soon.
-            </p>
-          )}
+          {tab === "my-meals" &&
+            (isBuildingMeal ? (
+              <MealBuilder
+                onSaved={() => {
+                  setIsBuildingMeal(false);
+                  loadMyMeals();
+                }}
+                onCancel={() => setIsBuildingMeal(false)}
+              />
+            ) : (
+              <div className="space-y-2">
+                <button
+                  type="button"
+                  onClick={() => setIsBuildingMeal(true)}
+                  className="rounded-md border border-neutral-300 px-3 py-1.5 text-sm font-medium text-neutral-700 transition-colors hover:border-tennessee/60 dark:border-neutral-700 dark:text-neutral-300"
+                >
+                  + New meal
+                </button>
+
+                {isLoadingTab && myMeals === null ? (
+                  <p className="text-sm text-neutral-400">Loading…</p>
+                ) : (myMeals ?? []).length === 0 ? (
+                  <p className="text-sm text-neutral-400">
+                    No saved meals yet. Build one from foods you use often to log it as a single
+                    unit next time.
+                  </p>
+                ) : (
+                  <ul className="space-y-2">
+                    {(myMeals ?? []).map((m) => (
+                      <SavedMealItem
+                        key={m.id}
+                        meal={m}
+                        date={date}
+                        mealCategory={meal}
+                        onChanged={loadMyMeals}
+                      />
+                    ))}
+                  </ul>
+                )}
+              </div>
+            ))}
 
           {tab === "my-foods" &&
             (isLoadingTab && myFoods === null ? (
