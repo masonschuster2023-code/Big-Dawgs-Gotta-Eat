@@ -1,0 +1,28 @@
+<svg width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background: brand orange, full bleed (OS applies its own corner mask) -->
+  <rect width="512" height="512" fill="#ff8200"/>
+
+  <!-- Ears: small, set low at the sides (bulldog "rose ear"), drawn first so
+       the head covers most of each and only a rounded lobe peeks out -->
+  <ellipse cx="98" cy="234" rx="56" ry="68" fill="#d66d00" transform="rotate(-24 98 234)"/>
+  <ellipse cx="414" cy="234" rx="56" ry="68" fill="#d66d00" transform="rotate(24 414 234)"/>
+
+  <!-- Head: wide and flat, not round — the defining bulldog proportion -->
+  <ellipse cx="256" cy="270" rx="192" ry="132" fill="#ffffff"/>
+
+  <!-- Jowls: soft bumps flanking the mouth, broadening the lower face -->
+  <ellipse cx="140" cy="336" rx="50" ry="58" fill="#f5ead8"/>
+  <ellipse cx="372" cy="336" rx="50" ry="58" fill="#f5ead8"/>
+
+  <!-- Eyes -->
+  <circle cx="198" cy="252" r="20" fill="#1a1210"/>
+  <circle cx="314" cy="252" r="20" fill="#1a1210"/>
+
+  <!-- Nose: wide and flat -->
+  <ellipse cx="256" cy="300" rx="42" ry="30" fill="#1a1210"/>
+
+  <!-- Steak: a wedge, not a bar — tapered shape plus a bone nub is what
+       actually reads as "meat" rather than "stick" at tiny size -->
+  <path d="M 118 372 L 420 358 Q 444 400 420 444 L 118 424 Q 100 398 118 372 Z" fill="#8a4a2b"/>
+  <ellipse cx="112" cy="398" rx="28" ry="36" fill="#f4e8d8"/>
+</svg>
