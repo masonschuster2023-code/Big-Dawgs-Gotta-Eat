@@ -2,40 +2,35 @@
 
 import { useActionState, useEffect, useRef } from "react";
 import { logManualFood } from "@/lib/actions/food";
+import type { Meal } from "@/lib/supabase/database.types";
 
-const MEALS = ["breakfast", "lunch", "dinner", "snack"] as const;
-
-export function FoodEntryForm({ date }: { date: string }) {
+export function FoodEntryForm({
+  date,
+  meal,
+  onAdded,
+}: {
+  date: string;
+  meal: Meal;
+  onAdded?: () => void;
+}) {
   const [state, formAction, pending] = useActionState(logManualFood, undefined);
   const formRef = useRef<HTMLFormElement>(null);
 
   useEffect(() => {
     if (state?.success) {
       formRef.current?.reset();
+      onAdded?.();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state]);
 
   return (
     <form ref={formRef} action={formAction} className="space-y-3">
       <input type="hidden" name="date" value={date} />
+      <input type="hidden" name="meal" value={meal} />
 
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-        <div className="col-span-2 sm:col-span-1">
-          <label className="block text-xs font-medium text-neutral-500">Meal</label>
-          <select
-            name="meal"
-            required
-            className="mt-1 w-full rounded-md border border-neutral-300 px-2 py-1.5 text-sm dark:border-neutral-700 dark:bg-neutral-900"
-          >
-            {MEALS.map((m) => (
-              <option key={m} value={m}>
-                {m[0].toUpperCase() + m.slice(1)}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        <div className="col-span-2 sm:col-span-3">
+        <div className="col-span-2 sm:col-span-4">
           <label className="block text-xs font-medium text-neutral-500">Food name</label>
           <input
             name="name"

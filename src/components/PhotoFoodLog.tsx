@@ -5,8 +5,6 @@ import { analyzeFoodPhoto, logPhotoFoodItem } from "@/lib/actions/photo-food";
 import type { PhotoFoodItem } from "@/lib/claude-vision";
 import type { Meal } from "@/lib/supabase/database.types";
 
-const MEALS: Meal[] = ["breakfast", "lunch", "dinner", "snack"];
-
 // Downscaling before upload controls both cost and latency — image tokens
 // cost more than text tokens, and a full-resolution phone photo is overkill
 // for this task.
@@ -44,7 +42,17 @@ async function compressImage(file: File): Promise<{ base64: string; mediaType: s
   return { base64, mediaType: "image/jpeg" };
 }
 
-function ItemRow({ date, item }: { date: string; item: PhotoFoodItem }) {
+function ItemRow({
+  date,
+  meal,
+  item,
+  onAdded,
+}: {
+  date: string;
+  meal: Meal;
+  item: PhotoFoodItem;
+  onAdded?: () => void;
+}) {
   const [name, setName] = useState(item.name);
   const [grams, setGrams] = useState(item.grams);
   const [macros, setMacros] = useState({
@@ -53,7 +61,6 @@ function ItemRow({ date, item }: { date: string; item: PhotoFoodItem }) {
     carbs: item.carbs,
     fat: item.fat,
   });
-  const [meal, setMeal] = useState<Meal>("breakfast");
   const [added, setAdded] = useState(false);
   const [isPending, startTransition] = useTransition();
 
@@ -130,18 +137,6 @@ function ItemRow({ date, item }: { date: string; item: PhotoFoodItem }) {
       </div>
 
       <div className="flex flex-wrap items-center gap-2">
-        <select
-          value={meal}
-          onChange={(e) => setMeal(e.target.value as Meal)}
-          className="rounded-md border border-neutral-300 px-2 py-1 text-xs dark:border-neutral-700 dark:bg-neutral-900"
-        >
-          {MEALS.map((m) => (
-            <option key={m} value={m}>
-              {m[0].toUpperCase() + m.slice(1)}
-            </option>
-          ))}
-        </select>
-
         <button
           type="button"
           disabled={isPending || !name.trim() || grams <= 0}
@@ -149,6 +144,7 @@ function ItemRow({ date, item }: { date: string; item: PhotoFoodItem }) {
             startTransition(async () => {
               await logPhotoFoodItem(date, meal, item.confidence, name.trim(), macros, grams);
               setAdded(true);
+              onAdded?.();
             })
           }
           className="rounded-md bg-tennessee px-3 py-1 text-xs font-medium text-white transition-colors hover:bg-tennessee-dark disabled:opacity-50"
@@ -160,7 +156,15 @@ function ItemRow({ date, item }: { date: string; item: PhotoFoodItem }) {
   );
 }
 
-export function PhotoFoodLog({ date }: { date: string }) {
+export function PhotoFoodLog({
+  date,
+  meal,
+  onAdded,
+}: {
+  date: string;
+  meal: Meal;
+  onAdded?: () => void;
+}) {
   const [items, setItems] = useState<PhotoFoodItem[] | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -223,7 +227,7 @@ export function PhotoFoodLog({ date }: { date: string }) {
       {items && items.length > 0 && (
         <ul className="space-y-2">
           {items.map((item, i) => (
-            <ItemRow key={i} date={date} item={item} />
+            <ItemRow key={i} date={date} meal={meal} item={item} onAdded={onAdded} />
           ))}
         </ul>
       )}

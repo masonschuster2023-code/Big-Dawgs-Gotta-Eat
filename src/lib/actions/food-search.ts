@@ -128,6 +128,71 @@ export async function searchFoodDatabase(
   }
 }
 
+// History tab: this user's own logging history, no search text required.
+// Same shape/heuristic as tier 1 of searchFoodDatabase (ordered by when the
+// food row was created, as a proxy for recency).
+export async function getRecentFoods(): Promise<{ results?: FoodSearchResult[]; error?: string }> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { error: "Not authenticated" };
+
+  const { data, error } = await supabase
+    .from("foods")
+    .select("*")
+    .eq("user_id", user.id)
+    .order("created_at", { ascending: false })
+    .limit(20);
+
+  if (error) return { error: error.message };
+
+  return {
+    results: (data ?? []).map((f) => ({
+      origin: "recent",
+      personalFoodId: f.id,
+      fdcId: f.fdc_id ?? undefined,
+      name: f.name,
+      servingSize: f.serving_size,
+      calories: Number(f.calories),
+      protein: Number(f.protein),
+      carbs: Number(f.carbs),
+      fat: Number(f.fat),
+    })),
+  };
+}
+
+// My Foods tab: foods this user created by hand via Quick add.
+export async function getMyFoods(): Promise<{ results?: FoodSearchResult[]; error?: string }> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { error: "Not authenticated" };
+
+  const { data, error } = await supabase
+    .from("foods")
+    .select("*")
+    .eq("user_id", user.id)
+    .eq("source", "manual")
+    .order("name", { ascending: true });
+
+  if (error) return { error: error.message };
+
+  return {
+    results: (data ?? []).map((f) => ({
+      origin: "recent",
+      personalFoodId: f.id,
+      name: f.name,
+      servingSize: f.serving_size,
+      calories: Number(f.calories),
+      protein: Number(f.protein),
+      carbs: Number(f.carbs),
+      fat: Number(f.fat),
+    })),
+  };
+}
+
 export async function addSearchResultToLog(
   date: string,
   meal: Meal,

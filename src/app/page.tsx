@@ -2,17 +2,15 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { todayDate } from "@/lib/date";
 import { DayTypePicker } from "@/components/DayTypePicker";
-import { MacroTotals } from "@/components/MacroTotals";
-import { FoodEntryForm } from "@/components/FoodEntryForm";
-import { FoodDatabaseSearch } from "@/components/FoodDatabaseSearch";
-import { BarcodeScan } from "@/components/BarcodeScan";
-import { PhotoFoodLog } from "@/components/PhotoFoodLog";
-import { EditableFoodLogItem } from "@/components/EditableFoodLogItem";
+import { CalorieProgress } from "@/components/CalorieProgress";
+import { MacroBreakdown } from "@/components/MacroBreakdown";
+import { DiaryMealCard } from "@/components/DiaryMealCard";
 import { Card } from "@/components/Card";
 import { signOut } from "@/app/auth/actions";
+import type { Meal } from "@/lib/supabase/database.types";
 
-const MEAL_ORDER = ["breakfast", "lunch", "dinner", "snack"] as const;
-const MEAL_LABELS: Record<(typeof MEAL_ORDER)[number], string> = {
+const MEAL_ORDER: Meal[] = ["breakfast", "lunch", "dinner", "snack"];
+const MEAL_LABELS: Record<Meal, string> = {
   breakfast: "Breakfast",
   lunch: "Lunch",
   dinner: "Dinner",
@@ -45,7 +43,10 @@ export default async function Home() {
     : { data: [] };
 
   const entries = foodLogs ?? [];
+  const dayType = dailyLog?.day_type ?? null;
 
+  // Live-computed from food_logs on every render — same totals logic as
+  // before, nothing cached, so there's no staleness to manage after edits.
   const totals = entries.reduce(
     (acc, entry) => {
       const food = entry.food;
@@ -104,53 +105,27 @@ export default async function Home() {
             />
           </Card>
 
-          <Card title="Today's totals">
-            <MacroTotals dayType={dailyLog?.day_type ?? null} totals={totals} />
+          <Card title="Today">
+            {dayType ? (
+              <div className="space-y-5">
+                <CalorieProgress consumed={totals.calories} goal={dayType.calorie_max} />
+                <div className="border-t border-neutral-200 pt-4 dark:border-neutral-800">
+                  <MacroBreakdown dayType={dayType} totals={totals} />
+                </div>
+              </div>
+            ) : (
+              <p className="text-sm text-neutral-400">Pick a day type above to see your targets.</p>
+            )}
           </Card>
 
-          <Card title="Today's food">
-            <div className="space-y-4">
+          <div>
+            <h2 className="mb-2 px-1 text-sm font-medium text-neutral-500">Diary</h2>
+            <div className="space-y-3">
               {entriesByMeal.map(({ meal, items }) => (
-                <div key={meal}>
-                  <h3 className="mb-1 text-xs font-semibold uppercase text-neutral-400">
-                    {MEAL_LABELS[meal]}
-                  </h3>
-                  {items.length === 0 ? (
-                    <p className="text-sm text-neutral-400">Nothing logged yet.</p>
-                  ) : (
-                    <ul className="space-y-1">
-                      {items.map((entry) => (
-                        <EditableFoodLogItem
-                          key={entry.id}
-                          id={entry.id}
-                          name={entry.food?.name ?? "Unknown food"}
-                          quantity={Number(entry.quantity)}
-                          meal={entry.meal}
-                          calories={Number(entry.food?.calories ?? 0) * Number(entry.quantity)}
-                        />
-                      ))}
-                    </ul>
-                  )}
-                </div>
+                <DiaryMealCard key={meal} meal={meal} label={MEAL_LABELS[meal]} entries={items} />
               ))}
             </div>
-          </Card>
-
-          <Card title="Log from a photo">
-            <PhotoFoodLog date={date} />
-          </Card>
-
-          <Card title="Scan barcode">
-            <BarcodeScan date={date} />
-          </Card>
-
-          <Card title="Search food database">
-            <FoodDatabaseSearch date={date} />
-          </Card>
-
-          <Card title="Add food manually">
-            <FoodEntryForm date={date} />
-          </Card>
+          </div>
         </div>
       </div>
     </div>

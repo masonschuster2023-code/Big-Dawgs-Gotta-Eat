@@ -4,8 +4,6 @@ import { useEffect, useRef, useState, useTransition } from "react";
 import { lookupBarcode, logBarcodeFood, type BarcodeLookupResult } from "@/lib/actions/barcode";
 import type { Meal } from "@/lib/supabase/database.types";
 
-const MEALS: Meal[] = ["breakfast", "lunch", "dinner", "snack"];
-
 interface Macros {
   calories: number;
   protein: number;
@@ -13,7 +11,15 @@ interface Macros {
   fat: number;
 }
 
-export function BarcodeScan({ date }: { date: string }) {
+export function BarcodeScan({
+  date,
+  meal,
+  onAdded,
+}: {
+  date: string;
+  meal: Meal;
+  onAdded?: () => void;
+}) {
   const [manualBarcode, setManualBarcode] = useState("");
   const [scanning, setScanning] = useState(false);
   const [barcode, setBarcode] = useState<string | null>(null);
@@ -22,7 +28,6 @@ export function BarcodeScan({ date }: { date: string }) {
   const [macros, setMacros] = useState<Macros>({ calories: 0, protein: 0, carbs: 0, fat: 0 });
   const [servingSize, setServingSize] = useState("");
   const [grams, setGrams] = useState(100);
-  const [meal, setMeal] = useState<Meal>("breakfast");
   const [notFound, setNotFound] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [added, setAdded] = useState(false);
@@ -107,6 +112,7 @@ export function BarcodeScan({ date }: { date: string }) {
     startSave(async () => {
       await logBarcodeFood(date, meal, barcode, name, macros, servingSize || null, grams, wasEdited());
       setAdded(true);
+      onAdded?.();
       reset();
     });
   };
@@ -244,18 +250,6 @@ export function BarcodeScan({ date }: { date: string }) {
               aria-label="Grams"
             />
             <span className="text-sm text-neutral-500">g</span>
-
-            <select
-              value={meal}
-              onChange={(e) => setMeal(e.target.value as Meal)}
-              className="rounded-md border border-neutral-300 px-2 py-1.5 text-sm dark:border-neutral-700 dark:bg-neutral-900"
-            >
-              {MEALS.map((m) => (
-                <option key={m} value={m}>
-                  {m[0].toUpperCase() + m.slice(1)}
-                </option>
-              ))}
-            </select>
 
             <button
               type="button"
