@@ -238,6 +238,113 @@ export async function resolveFoodId(
   return food.id;
 }
 
+// Lowercase, trim, strip accents/punctuation, collapse whitespace. Used for
+// exact-match catalog dedup, not fuzzy similarity — see upsertFoodCatalogEntry.
+// Not exported: this is a "use server" file, and Next.js requires every
+// export from one to be an async server action.
+function normalizeForMatch(s: string | null | undefined): string {
+  return (s ?? "")
+    .toLowerCase()
+    .normalize("NFKD")
+    .replace(/[\u0300-\u036f]/g, "") // strip accents (e.g. é -> e)
+    .replace(/[^a-z0-9\s]/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+export interface CatalogEntryInput {
+  source: "usda" | "photo_label";
+  fdcId?: string | null;
+  name: string;
+  brand?: string | null;
+  calories: number;
+  protein: number;
+  carbs: number;
+  fat: number;
+  servingSize: number;
+  servingUnit: string;
+}
+
+// The one place a food_catalog row gets created or reused. USDA hits have a
+// real fdc_id, so that's a hard unique key — upsert on conflict, same as
+// before. Photo-label hits have no fdc_id (a photo isn't a USDA record), so
+// there's nothing to upsert against; instead this does an exact match on
+// normalized name+brand and reuses that row if found. Deliberately not
+// fuzzy/similarity-based — a false merge (e.g. "Chicken Breast" matching
+// "Chicken Breast Tenders") silently attaches wrong macros to a food, which
+// is worse than a duplicate catalog row.
+export async function upsertFoodCatalogEntry(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  entry: CatalogEntryInput,
+): Promise<string> {
+  if (entry.fdcId) {
+    const { data, error } = await supabase
+      .from("food_catalog")
+      .upsert(
+        {
+          fdc_id: entry.fdcId,
+          name: entry.name,
+          brand: entry.brand ?? null,
+          calories: entry.calories,
+          protein: entry.protein,
+          carbs: entry.carbs,
+          fat: entry.fat,
+          serving_size: entry.servingSize,
+          serving_unit: entry.servingUnit,
+          source: entry.source,
+        },
+        { onConflict: "fdc_id" },
+      )
+      .select("id")
+      .single();
+
+    if (error || !data) throw new Error(error?.message ?? "Could not save catalog entry");
+    return data.id;
+  }
+
+  const normName = normalizeForMatch(entry.name);
+  const normBrand = normalizeForMatch(entry.brand);
+
+  if (normName) {
+    // Narrow the candidate set with a cheap substring filter (indexable),
+    // then compare normalized forms exactly in application code — the
+    // actual match decision, not the filter, is what has to be strict.
+    const firstWord = normName.split(" ")[0];
+    const { data: candidates } = await supabase
+      .from("food_catalog")
+      .select("id, name, brand")
+      .ilike("name", `%${firstWord}%`)
+      .limit(50);
+
+    const match = (candidates ?? []).find(
+      (c) => normalizeForMatch(c.name) === normName && normalizeForMatch(c.brand) === normBrand,
+    );
+
+    if (match) return match.id;
+  }
+
+  const { data: inserted, error: insertError } = await supabase
+    .from("food_catalog")
+    .insert({
+      name: entry.name,
+      brand: entry.brand ?? null,
+      calories: entry.calories,
+      protein: entry.protein,
+      carbs: entry.carbs,
+      fat: entry.fat,
+      serving_size: entry.servingSize,
+      serving_unit: entry.servingUnit,
+      source: entry.source,
+    })
+    .select("id")
+    .single();
+
+  if (insertError || !inserted) {
+    throw new Error(insertError?.message ?? "Could not save catalog entry");
+  }
+  return inserted.id;
+}
+
 export async function addSearchResultToLog(
   date: string,
   meal: Meal,

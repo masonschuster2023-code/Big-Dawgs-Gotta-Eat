@@ -54,6 +54,7 @@ function ItemRow({
   onAdded?: () => void;
 }) {
   const [name, setName] = useState(item.name);
+  const [brand, setBrand] = useState(item.brand ?? "");
   const [grams, setGrams] = useState(item.grams);
   const [macros, setMacros] = useState({
     calories: item.calories,
@@ -80,8 +81,19 @@ function ItemRow({
         type="text"
         value={name}
         onChange={(e) => setName(e.target.value)}
+        placeholder="Name"
         className="w-full rounded-md border border-neutral-300 px-2 py-1.5 text-sm dark:border-neutral-700 dark:bg-neutral-900"
       />
+
+      {item.confidence === "label" && (
+        <input
+          type="text"
+          value={brand}
+          onChange={(e) => setBrand(e.target.value)}
+          placeholder="Brand (optional)"
+          className="w-full rounded-md border border-neutral-300 px-2 py-1.5 text-sm dark:border-neutral-700 dark:bg-neutral-900"
+        />
+      )}
 
       <div className="grid grid-cols-2 gap-2 sm:grid-cols-5">
         <div>
@@ -142,7 +154,15 @@ function ItemRow({
           disabled={isPending || !name.trim() || grams <= 0}
           onClick={() =>
             startTransition(async () => {
-              await logPhotoFoodItem(date, meal, item.confidence, name.trim(), macros, grams);
+              await logPhotoFoodItem(
+                date,
+                meal,
+                item.confidence,
+                name.trim(),
+                item.confidence === "label" ? brand.trim() || null : null,
+                macros,
+                grams,
+              );
               setAdded(true);
               onAdded?.();
             })

@@ -14,6 +14,7 @@ export type PhotoConfidence = "label" | "estimate";
 
 export interface PhotoFoodItem {
   name: string;
+  brand: string | null;
   grams: number;
   calories: number;
   protein: number;
@@ -25,11 +26,11 @@ export interface PhotoFoodItem {
 const PROMPT = `You are analyzing a food photo for a calorie-tracking app.
 
 Return ONLY a JSON array, no prose, no markdown code fences. Each element must have exactly this shape:
-{"name": string, "grams": number, "calories": number, "protein": number, "carbs": number, "fat": number, "confidence": "label" | "estimate"}
+{"name": string, "brand": string | null, "grams": number, "calories": number, "protein": number, "carbs": number, "fat": number, "confidence": "label" | "estimate"}
 
 Rules:
-- If a nutrition facts label is visible and legible in the photo, read the exact values from it for the serving size shown, and set confidence to "label".
-- If there is no legible label, estimate the food item, a reasonable portion size in grams based on visual size, and typical macros for that food and portion, and set confidence to "estimate".
+- If a nutrition facts label is visible and legible in the photo, read the exact values from it for the serving size shown, and set confidence to "label". Set "brand" to the manufacturer/brand name as printed on the package (e.g. "Fairlife"), separate from "name" (e.g. "Core Power Protein Shake" — not "Fairlife Core Power Protein Shake"). This distinction matters: it's used to tell apart different products that would otherwise look similar by name alone.
+- If there is no legible label, estimate the food item, a reasonable portion size in grams based on visual size, and typical macros for that food and portion, set confidence to "estimate", and set "brand" to null — a homemade or restaurant item has no brand.
 - If the photo shows multiple distinct food items (e.g. a full plate), return one array element per item.
 - If you cannot identify any food in the image (blurry, no food visible, unrelated subject), return an empty array: []
 - calories/protein/carbs/fat must be the totals for the stated "grams" amount, not per 100g.
@@ -65,6 +66,7 @@ function parseItems(raw: string): PhotoFoodItem[] {
     const it = item as Record<string, unknown>;
     return {
       name: typeof it.name === "string" && it.name ? it.name : "Unknown food",
+      brand: typeof it.brand === "string" && it.brand.trim() ? it.brand.trim() : null,
       grams: Number(it.grams) || 0,
       calories: Number(it.calories) || 0,
       protein: Number(it.protein) || 0,

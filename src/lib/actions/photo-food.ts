@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { analyzePhotoForFood, type PhotoFoodItem, type PhotoConfidence } from "@/lib/claude-vision";
+import { upsertFoodCatalogEntry } from "@/lib/actions/food-search";
 import type { Meal } from "@/lib/supabase/database.types";
 
 export async function analyzeFoodPhoto(
@@ -42,6 +43,7 @@ export async function logPhotoFoodItem(
   meal: Meal,
   confidence: PhotoConfidence,
   name: string,
+  brand: string | null,
   macros: { calories: number; protein: number; carbs: number; fat: number },
   grams: number,
 ) {
@@ -74,24 +76,30 @@ export async function logPhotoFoodItem(
 
   // A photo-read label is real OCR'd data, same trust level as a verified
   // USDA hit — cache it into the shared catalog so it benefits future
-  // searches too. A visual estimate of a homemade/restaurant plate is a
-  // one-off guess specific to this photo and portion, so it never leaves
-  // this user's personal foods table.
+  // searches too, deduping against an existing entry by normalized
+  // name+brand since there's no fdc_id to key off of (see
+  // upsertFoodCatalogEntry). A visual estimate of a homemade/restaurant
+  // plate is a one-off guess specific to this photo and portion, so it
+  // never leaves this user's personal foods table.
   //
-  // Known limitation: there's no natural dedup key for a photo capture (no
-  // barcode, no fdc_id), so repeated label reads of the same product across
-  // users will each insert their own row here rather than deduping like the
-  // USDA-backed catalog entries do.
+  // food_catalog rows are always per-100g by convention (true by
+  // construction for USDA rows, which always store serving_size=100) — the
+  // search UI's quantity math assumes this for every non-"recent" origin
+  // regardless of what serving_size actually says. Scale the label's
+  // as-printed serving up to per-100g before storing so a photo_label row
+  // follows the same convention instead of quietly breaking it.
   if (source === "photo_label") {
-    await supabase.from("food_catalog").insert({
+    const scale = 100 / grams;
+    await upsertFoodCatalogEntry(supabase, {
       source: "photo_label",
       name,
-      calories: macros.calories,
-      protein: macros.protein,
-      carbs: macros.carbs,
-      fat: macros.fat,
-      serving_size: grams,
-      serving_unit: "g",
+      brand,
+      calories: macros.calories * scale,
+      protein: macros.protein * scale,
+      carbs: macros.carbs * scale,
+      fat: macros.fat * scale,
+      servingSize: 100,
+      servingUnit: "g",
     });
   }
 
