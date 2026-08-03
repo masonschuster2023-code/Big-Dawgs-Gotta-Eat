@@ -106,6 +106,35 @@ export async function getDaySelections(date: string): Promise<{
   return { selectedIds: (data ?? []).map((d) => d.custom_day_type_id) };
 }
 
+export async function getWeekSelections(
+  startDate: string,
+  endDate: string,
+): Promise<{
+  selectionsByDate?: Record<string, string[]>;
+  error?: string;
+}> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { error: "Not authenticated" };
+
+  const { data, error } = await supabase
+    .from("custom_day_type_selections")
+    .select("date, custom_day_type_id")
+    .eq("user_id", user.id)
+    .gte("date", startDate)
+    .lte("date", endDate);
+
+  if (error) return { error: error.message };
+
+  const selectionsByDate: Record<string, string[]> = {};
+  for (const row of data ?? []) {
+    (selectionsByDate[row.date] ??= []).push(row.custom_day_type_id);
+  }
+  return { selectionsByDate };
+}
+
 // Toggle: adds the selection if not present, removes it if present.
 export async function toggleDaySelection(date: string, customDayTypeId: string) {
   const supabase = await createClient();
