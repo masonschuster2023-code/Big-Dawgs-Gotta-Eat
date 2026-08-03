@@ -68,8 +68,14 @@ export function ProfileForm({ initialProfile }: { initialProfile: Profile | null
       });
       if (result.error) {
         setError(result.error);
-      } else {
+      } else if (initialProfile) {
+        // Editing an existing profile — unchanged behavior, go straight
+        // back to the dashboard.
         router.push("/");
+      } else {
+        // First-time save — offer the (optional) day-types step next
+        // instead of jumping straight to the dashboard.
+        router.push("/settings?onboarded=1");
       }
     });
   };

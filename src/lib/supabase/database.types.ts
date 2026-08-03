@@ -227,6 +227,47 @@ export interface Database {
         Update: Partial<Database["public"]["Tables"]["profiles"]["Row"]>;
         Relationships: [];
       };
+      custom_day_types: {
+        Row: {
+          id: string;
+          user_id: string;
+          name: string;
+          calorie_offset: number;
+          protein_skew: number;
+          carb_skew: number;
+          fat_skew: number;
+          created_at: string;
+        };
+        Insert: Partial<Database["public"]["Tables"]["custom_day_types"]["Row"]> & {
+          name: string;
+          calorie_offset: number;
+        };
+        Update: Partial<Database["public"]["Tables"]["custom_day_types"]["Row"]>;
+        Relationships: [];
+      };
+      custom_day_type_selections: {
+        Row: {
+          id: string;
+          user_id: string;
+          date: string;
+          custom_day_type_id: string;
+          created_at: string;
+        };
+        Insert: Partial<Database["public"]["Tables"]["custom_day_type_selections"]["Row"]> & {
+          date: string;
+          custom_day_type_id: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["custom_day_type_selections"]["Row"]>;
+        Relationships: [
+          {
+            foreignKeyName: "custom_day_type_selections_custom_day_type_id_fkey";
+            columns: ["custom_day_type_id"];
+            referencedRelation: "custom_day_types";
+            referencedColumns: ["id"];
+            isOneToOne: false;
+          },
+        ];
+      };
     };
     Views: Record<string, never>;
     Functions: Record<string, never>;

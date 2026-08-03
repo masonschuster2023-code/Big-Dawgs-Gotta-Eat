@@ -78,3 +78,39 @@ export function computeTargets(inputs: ProfileInputs): ComputedTargets {
     fat: Math.round(fat),
   };
 }
+
+// Custom day types (Part B): each selected type contributes its own
+// calorie offset, split into macros by its own skew, summed on top of the
+// Part A baseline. Multiple selections just sum — that's what makes a
+// combo day naturally add up to more than a single-activity day without
+// predefining every combination.
+export interface DayTypeOffset {
+  calorieOffset: number;
+  proteinSkew: number;
+  carbSkew: number;
+  fatSkew: number;
+}
+
+export function applyDayTypeOffsets(
+  baseline: ComputedTargets,
+  selected: DayTypeOffset[],
+): ComputedTargets {
+  let calories = baseline.calories;
+  let protein = baseline.protein;
+  let carbs = baseline.carbs;
+  let fat = baseline.fat;
+
+  for (const dt of selected) {
+    calories += dt.calorieOffset;
+    protein += (dt.calorieOffset * dt.proteinSkew) / 100 / 4;
+    carbs += (dt.calorieOffset * dt.carbSkew) / 100 / 4;
+    fat += (dt.calorieOffset * dt.fatSkew) / 100 / 9;
+  }
+
+  return {
+    calories: Math.round(calories),
+    protein: Math.round(protein),
+    carbs: Math.round(carbs),
+    fat: Math.round(fat),
+  };
+}

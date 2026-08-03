@@ -6,8 +6,11 @@ import { CalorieProgress } from "@/components/CalorieProgress";
 import { MacroBreakdown } from "@/components/MacroBreakdown";
 import { DiaryMealCard } from "@/components/DiaryMealCard";
 import { Card } from "@/components/Card";
+import { TodayDayTypesCard } from "@/components/TodayDayTypesCard";
 import { signOut } from "@/app/auth/actions";
 import { getProfile } from "@/lib/actions/profile";
+import { getCustomDayTypes, getDaySelections } from "@/lib/actions/custom-day-types";
+import { applyDayTypeOffsets } from "@/lib/goals";
 import type { Meal } from "@/lib/supabase/database.types";
 
 const MEAL_ORDER: Meal[] = ["breakfast", "lunch", "dinner", "snack"];
@@ -26,11 +29,37 @@ export default async function Home() {
 
   const date = todayDate();
 
-  const [{ data: dayTypes }, { data: dailyLog }, { profile }] = await Promise.all([
-    supabase.from("day_types").select("*").order("calorie_min", { ascending: false }),
-    supabase.from("daily_logs").select("*").eq("date", date).maybeSingle(),
-    getProfile(),
-  ]);
+  const [{ data: dayTypes }, { data: dailyLog }, { profile }, { customDayTypes }] =
+    await Promise.all([
+      supabase.from("day_types").select("*").order("calorie_min", { ascending: false }),
+      supabase.from("daily_logs").select("*").eq("date", date).maybeSingle(),
+      getProfile(),
+      getCustomDayTypes(),
+    ]);
+
+  // Only accounts that have set up at least one custom day type (the new,
+  // opt-in system from Part B) see anything related to it — an account on
+  // the original day_types system, including Mason's, always has zero here
+  // and this whole block is inert for it: no extra query beyond the cheap
+  // getCustomDayTypes() above, no new UI, no change to its targets.
+  const hasCustomDayTypes = (customDayTypes?.length ?? 0) > 0;
+  const { selectedIds } = hasCustomDayTypes ? await getDaySelections(date) : { selectedIds: [] };
+  const selectedSet = new Set(selectedIds ?? []);
+
+  const displayTargets =
+    profile && hasCustomDayTypes
+      ? applyDayTypeOffsets(
+          profile,
+          (customDayTypes ?? [])
+            .filter((d) => selectedSet.has(d.id))
+            .map((d) => ({
+              calorieOffset: d.calorieOffset,
+              proteinSkew: d.proteinSkew,
+              carbSkew: d.carbSkew,
+              fatSkew: d.fatSkew,
+            })),
+        )
+      : profile;
 
   const { data: foodLogs } = dailyLog
     ? await supabase
@@ -99,13 +128,27 @@ export default async function Home() {
             />
           </Card>
 
+          {hasCustomDayTypes && (
+            <Card title="Today's day types">
+              <TodayDayTypesCard
+                date={date}
+                customDayTypes={customDayTypes ?? []}
+                initialSelectedIds={selectedIds ?? []}
+              />
+            </Card>
+          )}
+
           <Card title="Today">
-            {profile ? (
+            {displayTargets ? (
               <div className="space-y-5">
-                <CalorieProgress consumed={totals.calories} goal={profile.calories} />
+                <CalorieProgress consumed={totals.calories} goal={displayTargets.calories} />
                 <div className="border-t border-neutral-200 pt-4 dark:border-neutral-800">
                   <MacroBreakdown
-                    targets={{ carbs: profile.carbs, fat: profile.fat, protein: profile.protein }}
+                    targets={{
+                      carbs: displayTargets.carbs,
+                      fat: displayTargets.fat,
+                      protein: displayTargets.protein,
+                    }}
                     totals={totals}
                   />
                 </div>
