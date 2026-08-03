@@ -10,7 +10,8 @@ import { TodayDayTypesCard } from "@/components/TodayDayTypesCard";
 import { signOut } from "@/app/auth/actions";
 import { getProfile } from "@/lib/actions/profile";
 import { getCustomDayTypes, getDaySelections } from "@/lib/actions/custom-day-types";
-import { applyDayTypeOffsets } from "@/lib/goals";
+import { applyDayTypeOffsets, type ComputedTargets } from "@/lib/goals";
+import { isLegacyAccount } from "@/lib/legacy-account";
 import type { Meal } from "@/lib/supabase/database.types";
 
 const MEAL_ORDER: Meal[] = ["breakfast", "lunch", "dinner", "snack"];
@@ -27,6 +28,7 @@ export default async function Home() {
     data: { user },
   } = await supabase.auth.getUser();
 
+  const legacy = isLegacyAccount(user?.email);
   const date = todayDate();
 
   const [{ data: dayTypes }, { data: dailyLog }, { profile }, { customDayTypes }] =
@@ -37,17 +39,32 @@ export default async function Home() {
       getCustomDayTypes(),
     ]);
 
-  // Only accounts that have set up at least one custom day type (the new,
-  // opt-in system from Part B) see anything related to it — an account on
-  // the original day_types system, including Mason's, always has zero here
-  // and this whole block is inert for it: no extra query beyond the cheap
-  // getCustomDayTypes() above, no new UI, no change to its targets.
-  const hasCustomDayTypes = (customDayTypes?.length ?? 0) > 0;
+  // The legacy day_types system (Mason's account only, see isLegacyAccount)
+  // and the custom day types system (every other account) are mutually
+  // exclusive — never both active for the same account.
+  const hasCustomDayTypes = !legacy && (customDayTypes?.length ?? 0) > 0;
   const { selectedIds } = hasCustomDayTypes ? await getDaySelections(date) : { selectedIds: [] };
   const selectedSet = new Set(selectedIds ?? []);
 
-  const displayTargets =
-    profile && hasCustomDayTypes
+  // Legacy targets come directly from the selected day_type row's own
+  // fixed values — restored to the exact pre-onboarding behavior, since
+  // that's what "the display updates when you pick a different day type"
+  // means for this account.
+  const selectedDayType = legacy
+    ? ((dayTypes ?? []).find((dt) => dt.id === dailyLog?.day_type_id) ?? null)
+    : null;
+  const legacyTargets: ComputedTargets | null = selectedDayType
+    ? {
+        calories: selectedDayType.calorie_max,
+        protein: selectedDayType.protein_g,
+        carbs: selectedDayType.carb_max,
+        fat: selectedDayType.fat_g,
+      }
+    : null;
+
+  const displayTargets = legacy
+    ? legacyTargets
+    : profile && hasCustomDayTypes
       ? applyDayTypeOffsets(
           profile,
           (customDayTypes ?? [])
@@ -119,14 +136,16 @@ export default async function Home() {
         </header>
 
         <div className="space-y-5">
-          <Card title="Day type">
-            <DayTypePicker
-              date={date}
-              dayTypes={dayTypes ?? []}
-              selectedDayTypeId={dailyLog?.day_type_id ?? null}
-              goingOut={dailyLog?.going_out_flag ?? false}
-            />
-          </Card>
+          {legacy && (
+            <Card title="Day type">
+              <DayTypePicker
+                date={date}
+                dayTypes={dayTypes ?? []}
+                selectedDayTypeId={dailyLog?.day_type_id ?? null}
+                goingOut={dailyLog?.going_out_flag ?? false}
+              />
+            </Card>
+          )}
 
           {hasCustomDayTypes && (
             <Card title="Today's day types">
@@ -153,6 +172,8 @@ export default async function Home() {
                   />
                 </div>
               </div>
+            ) : legacy ? (
+              <p className="text-sm text-neutral-400">Pick a day type above to see your targets.</p>
             ) : (
               <p className="text-sm text-neutral-400">
                 <Link href="/settings" className="text-tennessee underline">
