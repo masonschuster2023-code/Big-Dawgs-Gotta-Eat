@@ -123,6 +123,9 @@ export default async function Home() {
             <Link href="/week" className="text-sm font-medium text-tennessee hover:underline">
               This week →
             </Link>
+            <Link href="/weight" className="text-sm font-medium text-tennessee hover:underline">
+              Weight
+            </Link>
             <Link href="/settings" className="text-sm font-medium text-tennessee hover:underline">
               Settings
             </Link>

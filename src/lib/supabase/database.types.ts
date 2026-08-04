@@ -268,6 +268,37 @@ export interface Database {
           },
         ];
       };
+      weight_logs: {
+        Row: {
+          id: string;
+          user_id: string;
+          date: string;
+          weight: number;
+          created_at: string;
+        };
+        Insert: Partial<Database["public"]["Tables"]["weight_logs"]["Row"]> & {
+          date: string;
+          weight: number;
+        };
+        Update: Partial<Database["public"]["Tables"]["weight_logs"]["Row"]>;
+        Relationships: [];
+      };
+      weight_periods: {
+        Row: {
+          id: string;
+          user_id: string;
+          start_date: string;
+          start_weight: number;
+          end_date: string | null;
+          created_at: string;
+        };
+        Insert: Partial<Database["public"]["Tables"]["weight_periods"]["Row"]> & {
+          start_date: string;
+          start_weight: number;
+        };
+        Update: Partial<Database["public"]["Tables"]["weight_periods"]["Row"]>;
+        Relationships: [];
+      };
     };
     Views: Record<string, never>;
     Functions: Record<string, never>;

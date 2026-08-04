@@ -26,3 +26,13 @@ export function getWeekStart(dateStr: string): string {
   const diffToMonday = day === 0 ? -6 : 1 - day;
   return addDays(dateStr, diffToMonday);
 }
+
+// "YYYY-MM-DD" -> "Jan 15". UTC, same reasoning as addDays — operating on
+// an already-resolved calendar date string, not a fresh "now".
+export function formatShortDate(dateStr: string): string {
+  return new Intl.DateTimeFormat("en-US", {
+    month: "short",
+    day: "numeric",
+    timeZone: "UTC",
+  }).format(new Date(`${dateStr}T00:00:00Z`));
+}
