@@ -12,7 +12,7 @@ const LEGACY_ACCOUNT_EMAIL = "masonschuster2023@gmail.com";
 // live app that they match before this flips. Flipping it does not touch
 // the day_types table or his daily_logs history — it only changes which
 // system his own dashboard reads from, and is trivially reversible.
-const MIGRATED_TO_CUSTOM_DAY_TYPES = false;
+const MIGRATED_TO_CUSTOM_DAY_TYPES = true;
 
 export function isLegacyAccount(email: string | null | undefined): boolean {
   return email === LEGACY_ACCOUNT_EMAIL && !MIGRATED_TO_CUSTOM_DAY_TYPES;
