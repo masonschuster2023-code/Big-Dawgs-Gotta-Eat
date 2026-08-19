@@ -15,6 +15,7 @@ export interface BarcodeConfirmed {
   name: string;
   macros: Macros;
   servingSize: string | null;
+  servingQuantityG: number | null;
   wasEdited: boolean;
 }
 
@@ -109,6 +110,7 @@ export function BarcodeScan({ onConfirmed }: { onConfirmed: (result: BarcodeConf
       name,
       macros,
       servingSize: servingSize || null,
+      servingQuantityG: initial?.servingQuantityG ?? null,
       wasEdited: wasEdited(),
     });
     reset();
@@ -191,6 +193,15 @@ export function BarcodeScan({ onConfirmed }: { onConfirmed: (result: BarcodeConf
               className="mt-1 w-full rounded-md border border-neutral-300 px-2 py-1.5 text-sm dark:border-neutral-700 dark:bg-neutral-900"
             />
           </div>
+
+          {servingSize && (
+            <p className="text-xs text-neutral-400">
+              Reported serving: {servingSize}
+              {initial?.servingQuantityG
+                ? ` — the next screen will default to logging ${initial.servingQuantityG}g`
+                : ""}
+            </p>
+          )}
 
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
             <div>

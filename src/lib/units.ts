@@ -35,6 +35,13 @@ export interface FoodReference {
   referenceMacros: ComputedMacros;
   // What to show/use when there's no gram anchor, e.g. "1 scoop".
   nativeUnitLabel: string;
+  // The real-world amount to preselect, when known and different from
+  // referenceGrams. referenceGrams for a per-100g source (catalog/USDA/
+  // barcode) is a data-source artifact ("this is the basis the macros are
+  // reported against"), not a real serving — defaulting to it produces
+  // e.g. a 100g default for a product whose actual serving is 55g. Falls
+  // back to referenceGrams when absent.
+  defaultTotalGrams?: number;
 }
 
 export interface UnitOption {

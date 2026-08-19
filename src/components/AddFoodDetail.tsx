@@ -64,16 +64,19 @@ export function AddFoodDetail({
   error?: string | null;
 }) {
   const unitOptions = reference.referenceGrams !== null ? unitOptionsFor(name) : [];
-  // Default to the "g" unit with servings = the food's own reference
-  // grams, so the initial total on screen matches exactly what the food
-  // already represented before any unit/serving interaction — e.g. a
-  // 100g-basis catalog food starts at "1 g" x 100 servings = 100g, same
-  // total as before this screen existed.
+  // Default to the "g" unit with servings = the food's real default
+  // amount, so the initial total matches what the food actually
+  // represents — its real serving size when known (defaultTotalGrams,
+  // e.g. 55g for a barcode product whose label says so), falling back to
+  // the reference basis itself (e.g. 100g for a catalog/USDA food with no
+  // separate real-serving data available).
   const [selectedUnit, setSelectedUnit] = useState<UnitOption | null>(
     unitOptions.find((u) => u.id === "g") ?? unitOptions[0] ?? null,
   );
   const [servings, setServings] = useState(
-    reference.referenceGrams !== null ? String(reference.referenceGrams) : "1",
+    reference.referenceGrams !== null
+      ? String(reference.defaultTotalGrams ?? reference.referenceGrams)
+      : "1",
   );
   const [meal, setMeal] = useState<Meal>(initialMeal);
   const [sheetOpen, setSheetOpen] = useState(false);

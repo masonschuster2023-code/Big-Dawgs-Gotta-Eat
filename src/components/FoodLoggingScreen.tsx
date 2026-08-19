@@ -67,6 +67,10 @@ function detailFor(item: PendingItem): { name: string; verified: boolean; refere
           referenceGrams: 100,
           referenceMacros: item.confirmed.macros,
           nativeUnitLabel: "100 g",
+          // The bug this exists to fix: without this, every barcode item
+          // defaults to a bare 100g slice of the per-100g data regardless
+          // of what the product's real serving actually is.
+          defaultTotalGrams: item.confirmed.servingQuantityG ?? undefined,
         },
       };
     case "photo":

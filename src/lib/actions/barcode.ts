@@ -14,6 +14,12 @@ export interface BarcodeLookupResult {
   carbs: number;
   fat: number;
   servingSize: string | null;
+  // The real gram weight of one serving, when known — used to default the
+  // logged amount to the product's actual serving instead of a bare 100g
+  // slice of the per-100g data. Null (a saved correction or cached food
+  // has no serving_quantity data captured) means there's nothing better to
+  // default to than 100g.
+  servingQuantityG: number | null;
   error?: string;
 }
 
@@ -32,6 +38,7 @@ export async function lookupBarcode(barcode: string): Promise<BarcodeLookupResul
       carbs: 0,
       fat: 0,
       servingSize: null,
+      servingQuantityG: null,
       error: "Not authenticated",
     };
   }
@@ -62,6 +69,9 @@ export async function lookupBarcode(barcode: string): Promise<BarcodeLookupResul
       carbs: Number(override.carbs ?? 0),
       fat: Number(override.fat ?? 0),
       servingSize: cachedFood?.serving_size ?? null,
+      // Not persisted anywhere yet, so a correction has no serving weight
+      // to default to beyond the usual 100g fallback.
+      servingQuantityG: null,
     };
   }
 
@@ -77,6 +87,7 @@ export async function lookupBarcode(barcode: string): Promise<BarcodeLookupResul
         carbs: 0,
         fat: 0,
         servingSize: null,
+        servingQuantityG: null,
         error: "No product found for this barcode.",
       };
     }
@@ -92,6 +103,7 @@ export async function lookupBarcode(barcode: string): Promise<BarcodeLookupResul
       carbs: 0,
       fat: 0,
       servingSize: null,
+      servingQuantityG: null,
       error: err instanceof Error ? err.message : "Lookup failed",
     };
   }
