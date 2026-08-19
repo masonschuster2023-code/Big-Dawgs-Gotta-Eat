@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { todayDate } from "@/lib/date";
 import { FoodLoggingScreen } from "@/components/FoodLoggingScreen";
+import { BottomTabBar } from "@/components/BottomTabBar";
+import { Card } from "@/components/Card";
 import type { Meal } from "@/lib/supabase/database.types";
 
 const VALID_MEALS: Meal[] = ["breakfast", "lunch", "dinner", "snack"];
@@ -25,9 +27,9 @@ export default async function LogPage({
   const date = todayDate();
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen pb-28">
       <div className="mx-auto max-w-2xl px-4 py-8 sm:px-6">
-        <header className="mb-6 flex items-center justify-between rounded-2xl border border-black/5 bg-white/90 px-5 py-4 shadow-sm backdrop-blur-sm dark:border-white/10 dark:bg-neutral-900/80">
+        <header className="mb-6 flex items-center justify-between px-1">
           <div>
             <h1 className="text-xl font-bold">Log {MEAL_LABELS[meal]}</h1>
             <p className="text-sm text-neutral-500">{date}</p>
@@ -37,8 +39,12 @@ export default async function LogPage({
           </Link>
         </header>
 
-        <FoodLoggingScreen date={date} meal={meal} />
+        <Card>
+          <FoodLoggingScreen date={date} meal={meal} />
+        </Card>
       </div>
+
+      <BottomTabBar />
     </div>
   );
 }

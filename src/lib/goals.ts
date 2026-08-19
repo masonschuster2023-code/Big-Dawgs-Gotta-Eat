@@ -79,16 +79,30 @@ export function computeTargets(inputs: ProfileInputs): ComputedTargets {
   };
 }
 
+// Manual override reconciliation: how far a manually-entered calorie total
+// is from what the entered macro grams actually add up to. Used to warn,
+// not block — the user is explicitly overriding the formula, so grams that
+// don't perfectly reconcile with calories is expected slack, not an error.
+export function macroCalorieMismatch(targets: ComputedTargets): number {
+  const fromMacros = targets.protein * 4 + targets.carbs * 4 + targets.fat * 9;
+  return fromMacros - targets.calories;
+}
+
 // Custom day types (Part B): each selected type contributes its own
-// calorie offset, split into macros by its own skew, summed on top of the
-// Part A baseline. Multiple selections just sum — that's what makes a
-// combo day naturally add up to more than a single-activity day without
-// predefining every combination.
+// calorie offset plus independent signed protein/carb/fat gram offsets,
+// summed on top of the Part A baseline. Multiple selections just sum —
+// that's what makes a combo day naturally add up to more than a
+// single-activity day without predefining every combination.
+//
+// The macro offsets are independent of the calorie offset (not a split of
+// it), so a day type can move a macro in the opposite direction from
+// calories — e.g. more calories but less fat — which a
+// percentage-of-calorie-offset "skew" can't represent.
 export interface DayTypeOffset {
   calorieOffset: number;
-  proteinSkew: number;
-  carbSkew: number;
-  fatSkew: number;
+  proteinOffsetG: number;
+  carbOffsetG: number;
+  fatOffsetG: number;
 }
 
 export function applyDayTypeOffsets(
@@ -102,9 +116,9 @@ export function applyDayTypeOffsets(
 
   for (const dt of selected) {
     calories += dt.calorieOffset;
-    protein += (dt.calorieOffset * dt.proteinSkew) / 100 / 4;
-    carbs += (dt.calorieOffset * dt.carbSkew) / 100 / 4;
-    fat += (dt.calorieOffset * dt.fatSkew) / 100 / 9;
+    protein += dt.proteinOffsetG;
+    carbs += dt.carbOffsetG;
+    fat += dt.fatOffsetG;
   }
 
   return {

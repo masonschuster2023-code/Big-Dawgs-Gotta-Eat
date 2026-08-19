@@ -68,7 +68,7 @@ export function MealBuilder({ onSaved, onCancel }: { onSaved: () => void; onCanc
   };
 
   return (
-    <div className="space-y-3 rounded-lg border border-neutral-200 p-3 dark:border-neutral-800">
+    <div className="space-y-3 rounded-2xl bg-neutral-50/80 p-4 dark:bg-neutral-800/40">
       <input
         type="text"
         value={title}
@@ -139,7 +139,7 @@ export function MealBuilder({ onSaved, onCancel }: { onSaved: () => void; onCanc
           {results.map((r, i) => (
             <li
               key={r.personalFoodId ?? r.fdcId ?? i}
-              className="flex items-center justify-between gap-2 rounded-md border border-neutral-200 px-2 py-1.5 text-sm dark:border-neutral-800"
+              className="flex items-center justify-between gap-2 rounded-xl bg-white/70 px-2 py-1.5 text-sm dark:bg-neutral-900/40"
             >
               <div>
                 <p>{r.brand ? `${r.brand} — ${r.name}` : r.name}</p>

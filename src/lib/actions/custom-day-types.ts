@@ -7,12 +7,39 @@ export interface CustomDayType {
   id: string;
   name: string;
   calorieOffset: number;
-  proteinSkew: number;
-  carbSkew: number;
-  fatSkew: number;
+  proteinOffsetG: number;
+  carbOffsetG: number;
+  fatOffsetG: number;
+  archived: boolean;
 }
 
-export async function getCustomDayTypes(): Promise<{
+function fromRow(d: {
+  id: string;
+  name: string;
+  calorie_offset: number;
+  protein_offset_g: number;
+  carb_offset_g: number;
+  fat_offset_g: number;
+  archived: boolean;
+}): CustomDayType {
+  return {
+    id: d.id,
+    name: d.name,
+    calorieOffset: Number(d.calorie_offset),
+    proteinOffsetG: Number(d.protein_offset_g),
+    carbOffsetG: Number(d.carb_offset_g),
+    fatOffsetG: Number(d.fat_offset_g),
+    archived: d.archived,
+  };
+}
+
+// By default returns only active (non-archived) day types — the set that
+// should be offered for new selections. Pass includeArchived for the
+// management screen, which also lists archived ones (with a restore
+// option) rather than hiding them entirely.
+export async function getCustomDayTypes(options?: {
+  includeArchived?: boolean;
+}): Promise<{
   customDayTypes?: CustomDayType[];
   error?: string;
 }> {
@@ -22,38 +49,41 @@ export async function getCustomDayTypes(): Promise<{
   } = await supabase.auth.getUser();
   if (!user) return { error: "Not authenticated" };
 
-  const { data, error } = await supabase
-    .from("custom_day_types")
-    .select("*")
-    .eq("user_id", user.id)
-    .order("created_at", { ascending: true });
+  let query = supabase.from("custom_day_types").select("*").eq("user_id", user.id);
+  if (!options?.includeArchived) {
+    query = query.eq("archived", false);
+  }
+  const { data, error } = await query.order("created_at", { ascending: true });
 
   if (error) return { error: error.message };
 
-  return {
-    customDayTypes: (data ?? []).map((d) => ({
-      id: d.id,
-      name: d.name,
-      calorieOffset: Number(d.calorie_offset),
-      proteinSkew: d.protein_skew,
-      carbSkew: d.carb_skew,
-      fatSkew: d.fat_skew,
-    })),
-  };
+  return { customDayTypes: (data ?? []).map(fromRow) };
 }
 
-export async function createCustomDayType(input: {
+export interface DayTypeInput {
   name: string;
   calorieOffset: number;
-  proteinSkew: number;
-  carbSkew: number;
-  fatSkew: number;
-}) {
+  proteinOffsetG: number;
+  carbOffsetG: number;
+  fatOffsetG: number;
+}
+
+function validate(input: DayTypeInput) {
   const name = input.name.trim();
-  if (!name) throw new Error("Give the day type a name");
-  if (input.proteinSkew + input.carbSkew + input.fatSkew !== 100) {
-    throw new Error("Macro skew must add up to 100%");
+  if (!name) throw new Error("Give it a name.");
+  if (
+    !Number.isFinite(input.calorieOffset) ||
+    !Number.isFinite(input.proteinOffsetG) ||
+    !Number.isFinite(input.carbOffsetG) ||
+    !Number.isFinite(input.fatOffsetG)
+  ) {
+    throw new Error("Offsets must be numbers.");
   }
+  return name;
+}
+
+export async function createCustomDayType(input: DayTypeInput) {
+  const name = validate(input);
 
   const supabase = await createClient();
   const {
@@ -65,9 +95,9 @@ export async function createCustomDayType(input: {
     user_id: user.id,
     name,
     calorie_offset: input.calorieOffset,
-    protein_skew: input.proteinSkew,
-    carb_skew: input.carbSkew,
-    fat_skew: input.fatSkew,
+    protein_offset_g: input.proteinOffsetG,
+    carb_offset_g: input.carbOffsetG,
+    fat_offset_g: input.fatOffsetG,
   });
 
   if (error) throw new Error(error.message);
@@ -76,9 +106,48 @@ export async function createCustomDayType(input: {
   revalidatePath("/");
 }
 
-export async function deleteCustomDayType(id: string) {
+export async function updateCustomDayType(id: string, input: DayTypeInput) {
+  const name = validate(input);
+
   const supabase = await createClient();
-  const { error } = await supabase.from("custom_day_types").delete().eq("id", id);
+  const { error } = await supabase
+    .from("custom_day_types")
+    .update({
+      name,
+      calorie_offset: input.calorieOffset,
+      protein_offset_g: input.proteinOffsetG,
+      carb_offset_g: input.carbOffsetG,
+      fat_offset_g: input.fatOffsetG,
+    })
+    .eq("id", id);
+
+  if (error) throw new Error(error.message);
+
+  revalidatePath("/settings");
+  revalidatePath("/");
+}
+
+// Soft-delete: hides the type from future selection without touching any
+// daily_log_selections rows that already reference it, so past days keep
+// showing exactly what they showed before.
+export async function archiveCustomDayType(id: string) {
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("custom_day_types")
+    .update({ archived: true })
+    .eq("id", id);
+  if (error) throw new Error(error.message);
+
+  revalidatePath("/settings");
+  revalidatePath("/");
+}
+
+export async function restoreCustomDayType(id: string) {
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("custom_day_types")
+    .update({ archived: false })
+    .eq("id", id);
   if (error) throw new Error(error.message);
 
   revalidatePath("/settings");

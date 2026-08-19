@@ -208,6 +208,7 @@ export interface Database {
           protein: number;
           carbs: number;
           fat: number;
+          targets_manual_override: boolean;
           created_at: string;
           updated_at: string;
         };
@@ -233,9 +234,10 @@ export interface Database {
           user_id: string;
           name: string;
           calorie_offset: number;
-          protein_skew: number;
-          carb_skew: number;
-          fat_skew: number;
+          protein_offset_g: number;
+          carb_offset_g: number;
+          fat_offset_g: number;
+          archived: boolean;
           created_at: string;
         };
         Insert: Partial<Database["public"]["Tables"]["custom_day_types"]["Row"]> & {

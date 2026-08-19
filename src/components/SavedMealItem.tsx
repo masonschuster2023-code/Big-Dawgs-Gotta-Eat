@@ -136,7 +136,7 @@ export function SavedMealItem({
 
   if (mode === "collapsed") {
     return (
-      <li className="rounded-lg border border-neutral-200 p-3 text-sm dark:border-neutral-800">
+      <li className="rounded-2xl bg-neutral-50/80 p-4 text-sm dark:bg-neutral-800/40">
         <div className="flex items-center justify-between gap-2">
           <div>
             <p className="font-medium">{savedMeal.title}</p>
@@ -168,7 +168,7 @@ export function SavedMealItem({
 
   if (mode === "log") {
     return (
-      <li className="space-y-2 rounded-lg border border-neutral-200 p-3 text-sm dark:border-neutral-800">
+      <li className="space-y-2 rounded-2xl bg-neutral-50/80 p-4 text-sm dark:bg-neutral-800/40">
         <p className="font-medium">{savedMeal.title}</p>
         <ul className="space-y-1">
           {savedMeal.items.map((item) => (
@@ -214,7 +214,7 @@ export function SavedMealItem({
 
   // edit mode
   return (
-    <li className="space-y-2 rounded-lg border border-neutral-200 p-3 text-sm dark:border-neutral-800">
+    <li className="space-y-2 rounded-2xl bg-neutral-50/80 p-4 text-sm dark:bg-neutral-800/40">
       <div className="flex gap-2">
         <input
           type="text"
@@ -299,7 +299,7 @@ export function SavedMealItem({
               {addResults.map((r, i) => (
                 <li
                   key={r.personalFoodId ?? r.fdcId ?? i}
-                  className="flex items-center justify-between gap-2 rounded-md border border-neutral-200 px-2 py-1 dark:border-neutral-800"
+                  className="flex items-center justify-between gap-2 rounded-xl bg-white/70 px-2 py-1.5 dark:bg-neutral-900/40"
                 >
                   <div className="flex-1">
                     <p>{r.brand ? `${r.brand} — ${r.name}` : r.name}</p>

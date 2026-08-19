@@ -33,7 +33,7 @@ export function FoodResultRow({
   const factor = isPer100g ? amount / 100 : amount;
 
   return (
-    <li className="rounded-md border border-neutral-200 p-3 text-sm dark:border-neutral-800">
+    <li className="rounded-2xl bg-neutral-50/80 p-4 text-sm dark:bg-neutral-800/40">
       <div>
         <p className="font-medium">
           {result.brand ? `${result.brand} — ${result.name}` : result.name}

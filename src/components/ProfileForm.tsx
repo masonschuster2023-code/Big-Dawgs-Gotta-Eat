@@ -5,11 +5,13 @@ import { useRouter } from "next/navigation";
 import { saveProfile } from "@/lib/actions/profile";
 import {
   computeTargets,
+  macroCalorieMismatch,
   ACTIVITY_LABELS,
   GOAL_LABELS,
   type Sex,
   type ActivityLevel,
   type Goal,
+  type ComputedTargets,
 } from "@/lib/goals";
 import type { Profile } from "@/lib/actions/profile";
 
@@ -32,6 +34,15 @@ export function ProfileForm({ initialProfile }: { initialProfile: Profile | null
     initialProfile?.activity_level ?? "moderately_active",
   );
   const [goal, setGoal] = useState<Goal>(initialProfile?.goal ?? "maintain");
+  const [manualOverride, setManualOverride] = useState(
+    initialProfile?.targets_manual_override ?? false,
+  );
+  const [manualCalories, setManualCalories] = useState(
+    initialProfile?.calories?.toString() ?? "",
+  );
+  const [manualProtein, setManualProtein] = useState(initialProfile?.protein?.toString() ?? "");
+  const [manualCarbs, setManualCarbs] = useState(initialProfile?.carbs?.toString() ?? "");
+  const [manualFat, setManualFat] = useState(initialProfile?.fat?.toString() ?? "");
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
 
@@ -40,7 +51,7 @@ export function ProfileForm({ initialProfile }: { initialProfile: Profile | null
   const ageNum = Number(age);
   const inputsComplete = weightNum > 0 && heightNum > 0 && ageNum > 0;
 
-  const preview = inputsComplete
+  const recalcPreview = inputsComplete
     ? computeTargets({
         sex,
         weightLb: weightNum,
@@ -51,21 +62,44 @@ export function ProfileForm({ initialProfile }: { initialProfile: Profile | null
       })
     : null;
 
+  const manualTargets: ComputedTargets | null =
+    manualCalories && manualProtein && manualCarbs && manualFat
+      ? {
+          calories: Number(manualCalories),
+          protein: Number(manualProtein),
+          carbs: Number(manualCarbs),
+          fat: Number(manualFat),
+        }
+      : null;
+
+  const mismatch = manualTargets ? macroCalorieMismatch(manualTargets) : 0;
+  const mismatchWarning =
+    manualTargets && Math.abs(mismatch) > 50
+      ? `Protein/carbs/fat grams add up to about ${mismatch > 0 ? "+" : ""}${Math.round(mismatch)} cal ${mismatch > 0 ? "more" : "less"} than your calorie target. That's fine if it's intentional.`
+      : null;
+
   const submit = () => {
     setError(null);
     if (!inputsComplete) {
       setError("Fill in weight, height, and age.");
       return;
     }
+    if (manualOverride && !manualTargets) {
+      setError("Fill in calories, protein, carbs, and fat.");
+      return;
+    }
     startTransition(async () => {
-      const result = await saveProfile({
-        sex,
-        weightLb: weightNum,
-        heightIn: heightNum,
-        age: ageNum,
-        activityLevel,
-        goal,
-      });
+      const result = await saveProfile(
+        {
+          sex,
+          weightLb: weightNum,
+          heightIn: heightNum,
+          age: ageNum,
+          activityLevel,
+          goal,
+        },
+        manualOverride ? manualTargets : null,
+      );
       if (result.error) {
         setError(result.error);
       } else if (initialProfile) {
@@ -177,30 +211,102 @@ export function ProfileForm({ initialProfile }: { initialProfile: Profile | null
         </div>
       </div>
 
-      {preview && (
+      <label className="flex items-center gap-2 text-sm">
+        <input
+          type="checkbox"
+          checked={manualOverride}
+          onChange={(e) => setManualOverride(e.target.checked)}
+          className="h-4 w-4 rounded border-neutral-300 accent-tennessee dark:border-neutral-700"
+        />
+        Set custom targets manually
+      </label>
+
+      {manualOverride ? (
         <div className="rounded-lg border border-tennessee/30 bg-tennessee/5 p-4">
           <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-tennessee">
-            Your targets
+            Your custom targets
           </p>
-          <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-sm sm:grid-cols-4">
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
             <div>
-              <span className="text-neutral-500">Calories</span>
-              <p className="font-semibold">{preview.calories}</p>
+              <label className="block text-xs font-medium text-neutral-500">Calories</label>
+              <input
+                type="number"
+                step="any"
+                min={0}
+                value={manualCalories}
+                onChange={(e) => setManualCalories(e.target.value)}
+                className="mt-1 w-full rounded-md border border-neutral-300 px-2 py-1.5 text-sm dark:border-neutral-700 dark:bg-neutral-900"
+              />
             </div>
             <div>
-              <span className="text-neutral-500">Protein</span>
-              <p className="font-semibold">{preview.protein}g</p>
+              <label className="block text-xs font-medium text-neutral-500">Protein (g)</label>
+              <input
+                type="number"
+                step="any"
+                min={0}
+                value={manualProtein}
+                onChange={(e) => setManualProtein(e.target.value)}
+                className="mt-1 w-full rounded-md border border-neutral-300 px-2 py-1.5 text-sm dark:border-neutral-700 dark:bg-neutral-900"
+              />
             </div>
             <div>
-              <span className="text-neutral-500">Carbs</span>
-              <p className="font-semibold">{preview.carbs}g</p>
+              <label className="block text-xs font-medium text-neutral-500">Carbs (g)</label>
+              <input
+                type="number"
+                step="any"
+                min={0}
+                value={manualCarbs}
+                onChange={(e) => setManualCarbs(e.target.value)}
+                className="mt-1 w-full rounded-md border border-neutral-300 px-2 py-1.5 text-sm dark:border-neutral-700 dark:bg-neutral-900"
+              />
             </div>
             <div>
-              <span className="text-neutral-500">Fat</span>
-              <p className="font-semibold">{preview.fat}g</p>
+              <label className="block text-xs font-medium text-neutral-500">Fat (g)</label>
+              <input
+                type="number"
+                step="any"
+                min={0}
+                value={manualFat}
+                onChange={(e) => setManualFat(e.target.value)}
+                className="mt-1 w-full rounded-md border border-neutral-300 px-2 py-1.5 text-sm dark:border-neutral-700 dark:bg-neutral-900"
+              />
             </div>
           </div>
+          {mismatchWarning && (
+            <p className="mt-2 text-xs text-amber-600 dark:text-amber-500">{mismatchWarning}</p>
+          )}
+          <p className="mt-2 text-xs text-neutral-400">
+            These won&apos;t be recalculated from your stats above unless you turn this off and
+            save again.
+          </p>
         </div>
+      ) : (
+        recalcPreview && (
+          <div className="rounded-lg border border-tennessee/30 bg-tennessee/5 p-4">
+            <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-tennessee">
+              Your targets (recalculated preview)
+            </p>
+            <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-sm sm:grid-cols-4">
+              <div>
+                <span className="text-neutral-500">Calories</span>
+                <p className="font-semibold">{recalcPreview.calories}</p>
+              </div>
+              <div>
+                <span className="text-neutral-500">Protein</span>
+                <p className="font-semibold">{recalcPreview.protein}g</p>
+              </div>
+              <div>
+                <span className="text-neutral-500">Carbs</span>
+                <p className="font-semibold">{recalcPreview.carbs}g</p>
+              </div>
+              <div>
+                <span className="text-neutral-500">Fat</span>
+                <p className="font-semibold">{recalcPreview.fat}g</p>
+              </div>
+            </div>
+            <p className="mt-2 text-xs text-neutral-400">Not saved until you confirm below.</p>
+          </div>
+        )
       )}
 
       {error && <p className="text-sm text-red-600">{error}</p>}

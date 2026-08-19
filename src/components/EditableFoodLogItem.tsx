@@ -26,7 +26,7 @@ export function EditableFoodLogItem({
 
   if (!editing) {
     return (
-      <li className="flex items-center justify-between rounded-lg bg-zinc-100 px-3 py-2 text-sm dark:bg-neutral-800">
+      <li className="flex items-center justify-between rounded-xl bg-zinc-100 px-3 py-2 text-sm dark:bg-neutral-800">
         <button
           type="button"
           onClick={() => {
@@ -53,7 +53,7 @@ export function EditableFoodLogItem({
   }
 
   return (
-    <li className="space-y-2 rounded-lg bg-zinc-100 px-3 py-2 text-sm dark:bg-neutral-800">
+    <li className="space-y-2 rounded-xl bg-zinc-100 px-3 py-2 text-sm dark:bg-neutral-800">
       <p className="font-medium">{name}</p>
       <div className="flex flex-wrap items-center gap-2">
         <input

@@ -6,6 +6,14 @@
 // new account fall through onto this list in the first place.
 const LEGACY_ACCOUNT_EMAIL = "masonschuster2023@gmail.com";
 
+// Feature 2 Step 1 migration cutover for the legacy account. Stays false
+// until Mason has (a) added his four day types to custom_day_types with the
+// exact offsets that reproduce his legacy targets, and (b) confirmed in the
+// live app that they match before this flips. Flipping it does not touch
+// the day_types table or his daily_logs history — it only changes which
+// system his own dashboard reads from, and is trivially reversible.
+const MIGRATED_TO_CUSTOM_DAY_TYPES = false;
+
 export function isLegacyAccount(email: string | null | undefined): boolean {
-  return email === LEGACY_ACCOUNT_EMAIL;
+  return email === LEGACY_ACCOUNT_EMAIL && !MIGRATED_TO_CUSTOM_DAY_TYPES;
 }

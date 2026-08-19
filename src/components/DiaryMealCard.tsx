@@ -24,7 +24,7 @@ export function DiaryMealCard({
   );
 
   return (
-    <div className="rounded-xl border border-neutral-200 bg-white/60 p-4 dark:border-neutral-800 dark:bg-neutral-900/40">
+    <div className="rounded-[24px] bg-neutral-50/80 p-5 shadow-[0_1px_2px_rgba(0,0,0,0.03),0_6px_16px_-10px_rgba(0,0,0,0.1)] dark:bg-neutral-900/50">
       <div className="mb-2 flex items-center justify-between">
         <h3 className="font-semibold">{label}</h3>
         <span className="text-sm text-neutral-500">{Math.round(subtotal)} cal</span>

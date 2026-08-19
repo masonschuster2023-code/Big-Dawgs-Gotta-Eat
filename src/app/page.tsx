@@ -7,7 +7,7 @@ import { MacroBreakdown } from "@/components/MacroBreakdown";
 import { DiaryMealCard } from "@/components/DiaryMealCard";
 import { Card } from "@/components/Card";
 import { TodayDayTypesCard } from "@/components/TodayDayTypesCard";
-import { signOut } from "@/app/auth/actions";
+import { BottomTabBar } from "@/components/BottomTabBar";
 import { getProfile } from "@/lib/actions/profile";
 import { getCustomDayTypes, getDaySelections } from "@/lib/actions/custom-day-types";
 import { applyDayTypeOffsets, type ComputedTargets } from "@/lib/goals";
@@ -71,9 +71,9 @@ export default async function Home() {
             .filter((d) => selectedSet.has(d.id))
             .map((d) => ({
               calorieOffset: d.calorieOffset,
-              proteinSkew: d.proteinSkew,
-              carbSkew: d.carbSkew,
-              fatSkew: d.fatSkew,
+              proteinOffsetG: d.proteinOffsetG,
+              carbOffsetG: d.carbOffsetG,
+              fatOffsetG: d.fatOffsetG,
             })),
         )
       : profile;
@@ -110,35 +110,19 @@ export default async function Home() {
   }));
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen pb-28">
       <div className="mx-auto max-w-2xl px-4 py-8 sm:px-6">
-        <header className="mb-6 flex items-center justify-between rounded-2xl border border-black/5 bg-white/90 px-5 py-4 shadow-sm backdrop-blur-sm dark:border-white/10 dark:bg-neutral-900/80">
+        <header className="mb-6 flex items-center justify-between px-1">
           <div>
             <h1 className="text-xl font-bold">
               Big Dawgs Gotta <span className="text-tennessee">Eat</span>
             </h1>
             <p className="text-sm text-neutral-500">{date}</p>
           </div>
-          <div className="flex items-center gap-4">
-            <Link href="/week" className="text-sm font-medium text-tennessee hover:underline">
-              This week →
-            </Link>
-            <Link href="/weight" className="text-sm font-medium text-tennessee hover:underline">
-              Weight
-            </Link>
-            <Link href="/settings" className="text-sm font-medium text-tennessee hover:underline">
-              Settings
-            </Link>
-            <span className="hidden text-sm text-neutral-500 sm:inline">{user?.email}</span>
-            <form action={signOut}>
-              <button type="submit" className="text-sm font-medium text-neutral-500 hover:underline">
-                Sign out
-              </button>
-            </form>
-          </div>
+          <span className="hidden text-sm text-neutral-500 sm:inline">{user?.email}</span>
         </header>
 
-        <div className="space-y-5">
+        <div className="space-y-6">
           {legacy && (
             <Card title="Day type">
               <DayTypePicker
@@ -162,18 +146,16 @@ export default async function Home() {
 
           <Card title="Today">
             {displayTargets ? (
-              <div className="space-y-5">
+              <div className="space-y-6">
                 <CalorieProgress consumed={totals.calories} goal={displayTargets.calories} />
-                <div className="border-t border-neutral-200 pt-4 dark:border-neutral-800">
-                  <MacroBreakdown
-                    targets={{
-                      carbs: displayTargets.carbs,
-                      fat: displayTargets.fat,
-                      protein: displayTargets.protein,
-                    }}
-                    totals={totals}
-                  />
-                </div>
+                <MacroBreakdown
+                  targets={{
+                    carbs: displayTargets.carbs,
+                    fat: displayTargets.fat,
+                    protein: displayTargets.protein,
+                  }}
+                  totals={totals}
+                />
               </div>
             ) : legacy ? (
               <p className="text-sm text-neutral-400">Pick a day type above to see your targets.</p>
@@ -188,8 +170,8 @@ export default async function Home() {
           </Card>
 
           <div>
-            <h2 className="mb-2 px-1 text-sm font-medium text-neutral-500">Diary</h2>
-            <div className="space-y-3">
+            <h2 className="mb-3 px-1 text-sm font-medium text-neutral-500">Diary</h2>
+            <div className="space-y-4">
               {entriesByMeal.map(({ meal, items }) => (
                 <DiaryMealCard key={meal} meal={meal} label={MEAL_LABELS[meal]} entries={items} />
               ))}
@@ -197,6 +179,8 @@ export default async function Home() {
           </div>
         </div>
       </div>
+
+      <BottomTabBar />
     </div>
   );
 }

@@ -1,5 +1,5 @@
-import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
+import { BottomTabBar } from "@/components/BottomTabBar";
 import { todayDate, getWeekStart, addDays } from "@/lib/date";
 import { Card } from "@/components/Card";
 import { getProfile } from "@/lib/actions/profile";
@@ -100,21 +100,16 @@ export default async function WeekPage() {
     };
 
     return (
-      <div className="min-h-screen">
+      <div className="min-h-screen pb-28">
         <div className="mx-auto max-w-2xl px-4 py-8 sm:px-6">
-          <header className="mb-6 flex items-center justify-between rounded-2xl border border-black/5 bg-white/90 px-5 py-4 shadow-sm backdrop-blur-sm dark:border-white/10 dark:bg-neutral-900/80">
-            <div>
-              <h1 className="text-xl font-bold">This week</h1>
-              <p className="text-sm text-neutral-500">
-                {weekStart} – {weekEnd}
-              </p>
-            </div>
-            <Link href="/" className="text-sm font-medium text-tennessee hover:underline">
-              ← Today
-            </Link>
+          <header className="mb-6 px-1">
+            <h1 className="text-xl font-bold">This week</h1>
+            <p className="text-sm text-neutral-500">
+              {weekStart} – {weekEnd}
+            </p>
           </header>
 
-          <div className="space-y-5">
+          <div className="space-y-6">
             <Card>
               <div className="overflow-x-auto rounded-lg border border-neutral-200 dark:border-neutral-800">
               <table className="w-full min-w-[500px] text-sm">
@@ -213,6 +208,8 @@ export default async function WeekPage() {
             </Card>
           </div>
         </div>
+
+        <BottomTabBar />
       </div>
     );
   }
@@ -224,7 +221,10 @@ export default async function WeekPage() {
     await Promise.all([
       supabase.from("daily_logs").select("*").gte("date", weekStart).lte("date", weekEnd),
       getProfile(),
-      getCustomDayTypes(),
+      // includeArchived: a day type deleted this week must still resolve
+      // for any earlier day in the week that selected it — archiving hides
+      // it from future selection, it doesn't erase what already happened.
+      getCustomDayTypes({ includeArchived: true }),
       getWeekSelections(weekStart, weekEnd),
     ]);
 
@@ -265,9 +265,9 @@ export default async function WeekPage() {
           profile,
           selectedTypes.map((d) => ({
             calorieOffset: d.calorieOffset,
-            proteinSkew: d.proteinSkew,
-            carbSkew: d.carbSkew,
-            fatSkew: d.fatSkew,
+            proteinOffsetG: d.proteinOffsetG,
+            carbOffsetG: d.carbOffsetG,
+            fatOffsetG: d.fatOffsetG,
           })),
         )
       : null;
@@ -304,21 +304,16 @@ export default async function WeekPage() {
   };
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen pb-28">
       <div className="mx-auto max-w-2xl px-4 py-8 sm:px-6">
-        <header className="mb-6 flex items-center justify-between rounded-2xl border border-black/5 bg-white/90 px-5 py-4 shadow-sm backdrop-blur-sm dark:border-white/10 dark:bg-neutral-900/80">
-          <div>
-            <h1 className="text-xl font-bold">This week</h1>
-            <p className="text-sm text-neutral-500">
-              {weekStart} – {weekEnd}
-            </p>
-          </div>
-          <Link href="/" className="text-sm font-medium text-tennessee hover:underline">
-            ← Today
-          </Link>
+        <header className="mb-6 px-1">
+          <h1 className="text-xl font-bold">This week</h1>
+          <p className="text-sm text-neutral-500">
+            {weekStart} – {weekEnd}
+          </p>
         </header>
 
-        <div className="space-y-5">
+        <div className="space-y-6">
           <Card>
             <div className="overflow-x-auto rounded-lg border border-neutral-200 dark:border-neutral-800">
             <table className="w-full min-w-[500px] text-sm">
@@ -412,6 +407,8 @@ export default async function WeekPage() {
           </Card>
         </div>
       </div>
+
+      <BottomTabBar />
     </div>
   );
 }
