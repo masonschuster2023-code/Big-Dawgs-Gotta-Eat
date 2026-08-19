@@ -259,7 +259,9 @@ export default async function WeekPage() {
 
     // A baseline target is available the moment a profile exists — selecting
     // custom day types only adjusts it, it doesn't gate whether it exists,
-    // same as the dashboard.
+    // same as the dashboard. That adjustment layers on top regardless of
+    // whether the baseline itself is formula-computed or manually
+    // overridden (see the same note in app/page.tsx).
     const target = profile
       ? applyDayTypeOffsets(
           profile,

@@ -62,6 +62,12 @@ export default async function Home() {
       }
     : null;
 
+  // `profile` here is whatever's stored in calories/protein/carbs/fat,
+  // whether that came from the Mifflin-St Jeor recalculation or from a
+  // manual override (see targets_manual_override) — day-type offsets
+  // always layer on top of it either way. Deliberate: day types exist to
+  // adjust for a day's activity independent of how the baseline itself
+  // was set, not to be suppressed by manual override.
   const displayTargets = legacy
     ? legacyTargets
     : profile && hasCustomDayTypes
