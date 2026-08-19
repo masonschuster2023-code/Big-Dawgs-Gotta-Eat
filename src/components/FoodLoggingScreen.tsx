@@ -5,15 +5,21 @@ import {
   searchFoodDatabase,
   getRecentFoods,
   getMyFoods,
+  addSearchResultToLog,
   type FoodSearchResult,
 } from "@/lib/actions/food-search";
+import { logBarcodeFood } from "@/lib/actions/barcode";
+import { logPhotoFoodItem } from "@/lib/actions/photo-food";
+import { logManualFood } from "@/lib/actions/food";
 import { getMyMeals, type SavedMeal } from "@/lib/actions/meals";
 import { FoodResultRow } from "@/components/FoodResultRow";
-import { BarcodeScan } from "@/components/BarcodeScan";
-import { PhotoFoodLog } from "@/components/PhotoFoodLog";
-import { FoodEntryForm } from "@/components/FoodEntryForm";
+import { BarcodeScan, type BarcodeConfirmed } from "@/components/BarcodeScan";
+import { PhotoFoodLog, type PhotoItemConfirmed } from "@/components/PhotoFoodLog";
+import { FoodEntryForm, type ManualFoodDraft } from "@/components/FoodEntryForm";
 import { MealBuilder } from "@/components/MealBuilder";
 import { SavedMealItem } from "@/components/SavedMealItem";
+import { AddFoodDetail, type LogPayload } from "@/components/AddFoodDetail";
+import { parseGramsServing, type FoodReference } from "@/lib/units";
 import type { Meal } from "@/lib/supabase/database.types";
 
 type Tab = "history" | "my-meals" | "my-foods";
@@ -25,12 +31,65 @@ const TAB_LABEL: Record<Tab, string> = {
   "my-foods": "My Foods",
 };
 
-function actionButtonClass(active: boolean) {
-  return `rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
-    active
-      ? "bg-tennessee text-white"
-      : "border border-neutral-300 text-neutral-700 hover:border-tennessee/60 dark:border-neutral-700 dark:text-neutral-300"
-  }`;
+type PendingItem =
+  | { kind: "search"; result: FoodSearchResult }
+  | { kind: "barcode"; confirmed: BarcodeConfirmed }
+  | { kind: "photo"; confirmed: PhotoItemConfirmed }
+  | { kind: "manual"; draft: ManualFoodDraft };
+
+function detailFor(item: PendingItem): { name: string; verified: boolean; reference: FoodReference } {
+  switch (item.kind) {
+    case "search":
+      return {
+        name: item.result.name,
+        // Personal history and shared catalog are confirmed data; a live
+        // USDA pull that hasn't been saved/confirmed into the catalog yet
+        // isn't.
+        verified: item.result.origin !== "usda",
+        reference: {
+          referenceGrams: parseGramsServing(item.result.servingSize),
+          referenceMacros: {
+            calories: item.result.calories,
+            protein: item.result.protein,
+            carbs: item.result.carbs,
+            fat: item.result.fat,
+          },
+          nativeUnitLabel: item.result.servingSize ?? "1 serving",
+        },
+      };
+    case "barcode":
+      return {
+        name: item.confirmed.name,
+        // A fresh Open Food Facts lookup, not part of the three-tier
+        // search's personal-history/catalog tiers — never verified.
+        verified: false,
+        reference: {
+          referenceGrams: 100,
+          referenceMacros: item.confirmed.macros,
+          nativeUnitLabel: "100 g",
+        },
+      };
+    case "photo":
+      return {
+        name: item.confirmed.name,
+        verified: false,
+        reference: {
+          referenceGrams: item.confirmed.grams,
+          referenceMacros: item.confirmed.macros,
+          nativeUnitLabel: `${item.confirmed.grams} g`,
+        },
+      };
+    case "manual":
+      return {
+        name: item.draft.name,
+        verified: false,
+        reference: {
+          referenceGrams: parseGramsServing(item.draft.servingSize),
+          referenceMacros: item.draft.macros,
+          nativeUnitLabel: item.draft.servingSize ?? "1 serving",
+        },
+      };
+  }
 }
 
 export function FoodLoggingScreen({ date, meal }: { date: string; meal: Meal }) {
@@ -47,6 +106,10 @@ export function FoodLoggingScreen({ date, meal }: { date: string; meal: Meal }) 
   const [myMeals, setMyMeals] = useState<SavedMeal[] | null>(null);
   const [isBuildingMeal, setIsBuildingMeal] = useState(false);
   const [isLoadingTab, startLoadTab] = useTransition();
+
+  const [pendingItem, setPendingItem] = useState<PendingItem | null>(null);
+  const [logError, setLogError] = useState<string | null>(null);
+  const [isLogging, startLogging] = useTransition();
 
   const loadRecent = () => startLoadTab(async () => setRecent((await getRecentFoods()).results ?? []));
   const loadMyFoods = () => startLoadTab(async () => setMyFoods((await getMyFoods()).results ?? []));
@@ -78,7 +141,84 @@ export function FoodLoggingScreen({ date, meal }: { date: string; meal: Meal }) 
   };
 
   // Keep History fresh after logging something new from any entry point.
-  const handleAdded = () => loadRecent();
+  const handleLogged = () => {
+    loadRecent();
+    setPendingItem(null);
+  };
+
+  const logPending = (payload: LogPayload) => {
+    if (!pendingItem) return;
+    setLogError(null);
+    startLogging(async () => {
+      try {
+        switch (pendingItem.kind) {
+          case "search":
+            await addSearchResultToLog(date, payload.meal, pendingItem.result, payload.effectiveQuantity);
+            break;
+          case "barcode":
+            await logBarcodeFood(
+              date,
+              payload.meal,
+              pendingItem.confirmed.barcode,
+              pendingItem.confirmed.name,
+              pendingItem.confirmed.macros,
+              pendingItem.confirmed.servingSize,
+              payload.totalGrams ?? 100,
+              pendingItem.confirmed.wasEdited,
+            );
+            break;
+          case "photo":
+            await logPhotoFoodItem(
+              date,
+              payload.meal,
+              pendingItem.confirmed.confidence,
+              pendingItem.confirmed.name,
+              pendingItem.confirmed.brand,
+              payload.macros,
+              payload.totalGrams ?? pendingItem.confirmed.grams,
+            );
+            break;
+          case "manual": {
+            const formData = new FormData();
+            formData.set("date", date);
+            formData.set("meal", payload.meal);
+            formData.set("name", pendingItem.draft.name);
+            formData.set("calories", String(pendingItem.draft.macros.calories));
+            formData.set("protein", String(pendingItem.draft.macros.protein));
+            formData.set("carbs", String(pendingItem.draft.macros.carbs));
+            formData.set("fat", String(pendingItem.draft.macros.fat));
+            formData.set("serving_size", pendingItem.draft.servingSize ?? "");
+            formData.set("quantity", String(payload.effectiveQuantity));
+            const result = await logManualFood(undefined, formData);
+            if (result?.error) throw new Error(result.error);
+            break;
+          }
+        }
+        handleLogged();
+      } catch (err) {
+        setLogError(err instanceof Error ? err.message : "Could not log this food");
+      }
+    });
+  };
+
+  if (pendingItem) {
+    const { name, verified, reference } = detailFor(pendingItem);
+    return (
+      <AddFoodDetail
+        name={name}
+        verified={verified}
+        reference={reference}
+        initialMeal={meal}
+        onBack={() => {
+          setPendingItem(null);
+          setLogError(null);
+        }}
+        onLog={logPending}
+        isLogging={isLogging}
+        error={logError}
+      />
+    );
+  }
 
   const showingSearch = searchResults !== null;
 
@@ -134,29 +274,47 @@ export function FoodLoggingScreen({ date, meal }: { date: string; meal: Meal }) 
         <button
           type="button"
           onClick={() => setAction(action === "barcode" ? null : "barcode")}
-          className={actionButtonClass(action === "barcode")}
+          className={`rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
+            action === "barcode"
+              ? "bg-tennessee text-white"
+              : "border border-neutral-300 text-neutral-700 hover:border-tennessee/60 dark:border-neutral-700 dark:text-neutral-300"
+          }`}
         >
           Barcode scan
         </button>
         <button
           type="button"
           onClick={() => setAction(action === "photo" ? null : "photo")}
-          className={actionButtonClass(action === "photo")}
+          className={`rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
+            action === "photo"
+              ? "bg-tennessee text-white"
+              : "border border-neutral-300 text-neutral-700 hover:border-tennessee/60 dark:border-neutral-700 dark:text-neutral-300"
+          }`}
         >
           Meal scan
         </button>
         <button
           type="button"
           onClick={() => setAction(action === "quickadd" ? null : "quickadd")}
-          className={actionButtonClass(action === "quickadd")}
+          className={`rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
+            action === "quickadd"
+              ? "bg-tennessee text-white"
+              : "border border-neutral-300 text-neutral-700 hover:border-tennessee/60 dark:border-neutral-700 dark:text-neutral-300"
+          }`}
         >
           Quick add
         </button>
       </div>
 
-      {action === "barcode" && <BarcodeScan date={date} meal={meal} onAdded={handleAdded} />}
-      {action === "photo" && <PhotoFoodLog date={date} meal={meal} onAdded={handleAdded} />}
-      {action === "quickadd" && <FoodEntryForm date={date} meal={meal} onAdded={handleAdded} />}
+      {action === "barcode" && (
+        <BarcodeScan onConfirmed={(confirmed) => setPendingItem({ kind: "barcode", confirmed })} />
+      )}
+      {action === "photo" && (
+        <PhotoFoodLog onConfirmed={(confirmed) => setPendingItem({ kind: "photo", confirmed })} />
+      )}
+      {action === "quickadd" && (
+        <FoodEntryForm onContinue={(draft) => setPendingItem({ kind: "manual", draft })} />
+      )}
 
       {showingSearch ? (
         <div className="space-y-2">
@@ -179,10 +337,8 @@ export function FoodLoggingScreen({ date, meal }: { date: string; meal: Meal }) 
               {searchResults!.map((r, i) => (
                 <FoodResultRow
                   key={r.personalFoodId ?? r.fdcId ?? i}
-                  date={date}
-                  meal={meal}
                   result={r}
-                  onAdded={handleAdded}
+                  onSelect={(result) => setPendingItem({ kind: "search", result })}
                 />
               ))}
             </ul>
@@ -202,10 +358,8 @@ export function FoodLoggingScreen({ date, meal }: { date: string; meal: Meal }) 
                 {(recent ?? []).map((r) => (
                   <FoodResultRow
                     key={r.personalFoodId}
-                    date={date}
-                    meal={meal}
                     result={r}
-                    onAdded={handleAdded}
+                    onSelect={(result) => setPendingItem({ kind: "search", result })}
                   />
                 ))}
               </ul>
@@ -265,10 +419,8 @@ export function FoodLoggingScreen({ date, meal }: { date: string; meal: Meal }) 
                 {(myFoods ?? []).map((r) => (
                   <FoodResultRow
                     key={r.personalFoodId}
-                    date={date}
-                    meal={meal}
                     result={r}
-                    onAdded={handleAdded}
+                    onSelect={(result) => setPendingItem({ kind: "search", result })}
                   />
                 ))}
               </ul>

@@ -1,9 +1,8 @@
 "use client";
 
 import { useRef, useState, useTransition } from "react";
-import { analyzeFoodPhoto, logPhotoFoodItem } from "@/lib/actions/photo-food";
-import type { PhotoFoodItem } from "@/lib/claude-vision";
-import type { Meal } from "@/lib/supabase/database.types";
+import { analyzeFoodPhoto } from "@/lib/actions/photo-food";
+import type { PhotoFoodItem, PhotoConfidence } from "@/lib/claude-vision";
 
 // Downscaling before upload controls both cost and latency — image tokens
 // cost more than text tokens, and a full-resolution phone photo is overkill
@@ -42,16 +41,20 @@ async function compressImage(file: File): Promise<{ base64: string; mediaType: s
   return { base64, mediaType: "image/jpeg" };
 }
 
+export interface PhotoItemConfirmed {
+  confidence: PhotoConfidence;
+  name: string;
+  brand: string | null;
+  macros: { calories: number; protein: number; carbs: number; fat: number };
+  grams: number;
+}
+
 function ItemRow({
-  date,
-  meal,
   item,
-  onAdded,
+  onConfirmed,
 }: {
-  date: string;
-  meal: Meal;
   item: PhotoFoodItem;
-  onAdded?: () => void;
+  onConfirmed: (result: PhotoItemConfirmed) => void;
 }) {
   const [name, setName] = useState(item.name);
   const [brand, setBrand] = useState(item.brand ?? "");
@@ -62,11 +65,9 @@ function ItemRow({
     carbs: item.carbs,
     fat: item.fat,
   });
-  const [added, setAdded] = useState(false);
-  const [isPending, startTransition] = useTransition();
 
   return (
-    <li className="space-y-2 rounded-lg border border-neutral-200 p-3 text-sm dark:border-neutral-800">
+    <li className="space-y-2 rounded-2xl bg-neutral-50/80 p-4 text-sm dark:bg-neutral-800/40">
       <span
         className={`inline-block rounded-full px-2 py-0.5 text-xs font-medium ${
           item.confidence === "label"
@@ -151,40 +152,26 @@ function ItemRow({
       <div className="flex flex-wrap items-center gap-2">
         <button
           type="button"
-          disabled={isPending || !name.trim() || grams <= 0}
+          disabled={!name.trim() || grams <= 0}
           onClick={() =>
-            startTransition(async () => {
-              await logPhotoFoodItem(
-                date,
-                meal,
-                item.confidence,
-                name.trim(),
-                item.confidence === "label" ? brand.trim() || null : null,
-                macros,
-                grams,
-              );
-              setAdded(true);
-              onAdded?.();
+            onConfirmed({
+              confidence: item.confidence,
+              name: name.trim(),
+              brand: item.confidence === "label" ? brand.trim() || null : null,
+              macros,
+              grams,
             })
           }
           className="rounded-md bg-tennessee px-3 py-1 text-xs font-medium text-white transition-colors hover:bg-tennessee-dark disabled:opacity-50"
         >
-          {isPending ? "Adding…" : added ? "Added ✓" : "Add to log"}
+          Continue
         </button>
       </div>
     </li>
   );
 }
 
-export function PhotoFoodLog({
-  date,
-  meal,
-  onAdded,
-}: {
-  date: string;
-  meal: Meal;
-  onAdded?: () => void;
-}) {
+export function PhotoFoodLog({ onConfirmed }: { onConfirmed: (result: PhotoItemConfirmed) => void }) {
   const [items, setItems] = useState<PhotoFoodItem[] | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -247,7 +234,7 @@ export function PhotoFoodLog({
       {items && items.length > 0 && (
         <ul className="space-y-2">
           {items.map((item, i) => (
-            <ItemRow key={i} date={date} meal={meal} item={item} onAdded={onAdded} />
+            <ItemRow key={i} item={item} onConfirmed={onConfirmed} />
           ))}
         </ul>
       )}

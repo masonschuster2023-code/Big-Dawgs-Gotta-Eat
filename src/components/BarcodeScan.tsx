@@ -1,8 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, useTransition } from "react";
-import { lookupBarcode, logBarcodeFood, type BarcodeLookupResult } from "@/lib/actions/barcode";
-import type { Meal } from "@/lib/supabase/database.types";
+import { lookupBarcode, type BarcodeLookupResult } from "@/lib/actions/barcode";
 
 interface Macros {
   calories: number;
@@ -11,15 +10,15 @@ interface Macros {
   fat: number;
 }
 
-export function BarcodeScan({
-  date,
-  meal,
-  onAdded,
-}: {
-  date: string;
-  meal: Meal;
-  onAdded?: () => void;
-}) {
+export interface BarcodeConfirmed {
+  barcode: string;
+  name: string;
+  macros: Macros;
+  servingSize: string | null;
+  wasEdited: boolean;
+}
+
+export function BarcodeScan({ onConfirmed }: { onConfirmed: (result: BarcodeConfirmed) => void }) {
   const [manualBarcode, setManualBarcode] = useState("");
   const [scanning, setScanning] = useState(false);
   const [barcode, setBarcode] = useState<string | null>(null);
@@ -27,20 +26,16 @@ export function BarcodeScan({
   const [name, setName] = useState("");
   const [macros, setMacros] = useState<Macros>({ calories: 0, protein: 0, carbs: 0, fat: 0 });
   const [servingSize, setServingSize] = useState("");
-  const [grams, setGrams] = useState(100);
   const [notFound, setNotFound] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [added, setAdded] = useState(false);
 
   const [isLookingUp, startLookup] = useTransition();
-  const [isSaving, startSave] = useTransition();
 
   const videoRef = useRef<HTMLVideoElement>(null);
   const controlsRef = useRef<{ stop: () => void } | null>(null);
 
   const runLookup = (code: string) => {
     setError(null);
-    setAdded(false);
     startLookup(async () => {
       const result = await lookupBarcode(code);
       setBarcode(code);
@@ -107,14 +102,16 @@ export function BarcodeScan({
     setNotFound(false);
   };
 
-  const submit = () => {
+  const continueToDetail = () => {
     if (!barcode) return;
-    startSave(async () => {
-      await logBarcodeFood(date, meal, barcode, name, macros, servingSize || null, grams, wasEdited());
-      setAdded(true);
-      onAdded?.();
-      reset();
+    onConfirmed({
+      barcode,
+      name,
+      macros,
+      servingSize: servingSize || null,
+      wasEdited: wasEdited(),
     });
+    reset();
   };
 
   return (
@@ -172,10 +169,9 @@ export function BarcodeScan({
       )}
 
       {error && <p className="text-sm text-red-600">{error}</p>}
-      {added && <p className="text-sm text-green-600">Added ✓</p>}
 
       {barcode && (
-        <div className="space-y-3">
+        <div className="space-y-3 rounded-2xl bg-neutral-50/80 p-4 dark:bg-neutral-800/40">
           {initial?.isCorrection && (
             <p className="text-xs text-neutral-500">Using your saved correction for this barcode.</p>
           )}
@@ -240,31 +236,14 @@ export function BarcodeScan({
           </div>
 
           <div className="flex flex-wrap items-center gap-2">
-            <input
-              type="number"
-              step="any"
-              value={grams}
-              min={1}
-              onChange={(e) => setGrams(Number(e.target.value) || 0)}
-              className="w-20 rounded-md border border-neutral-300 px-2 py-1.5 text-sm dark:border-neutral-700 dark:bg-neutral-900"
-              aria-label="Grams"
-            />
-            <span className="text-sm text-neutral-500">g</span>
-
             <button
               type="button"
-              disabled={isSaving || grams <= 0}
-              onClick={submit}
-              className="rounded-md bg-tennessee px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-tennessee-dark disabled:opacity-50"
+              onClick={continueToDetail}
+              className="rounded-md bg-tennessee px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-tennessee-dark"
             >
-              {isSaving ? "Adding…" : "Add"}
+              Continue
             </button>
-
-            <button
-              type="button"
-              onClick={reset}
-              className="text-sm text-neutral-500 underline"
-            >
+            <button type="button" onClick={reset} className="text-sm text-neutral-500 underline">
               Scan another
             </button>
           </div>

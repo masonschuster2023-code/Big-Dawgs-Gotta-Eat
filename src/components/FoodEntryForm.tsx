@@ -1,41 +1,53 @@
 "use client";
 
-import { useActionState, useEffect, useRef } from "react";
-import { logManualFood } from "@/lib/actions/food";
-import type { Meal } from "@/lib/supabase/database.types";
+import { useState } from "react";
+import type { ComputedMacros } from "@/lib/units";
 
-export function FoodEntryForm({
-  date,
-  meal,
-  onAdded,
-}: {
-  date: string;
-  meal: Meal;
-  onAdded?: () => void;
-}) {
-  const [state, formAction, pending] = useActionState(logManualFood, undefined);
-  const formRef = useRef<HTMLFormElement>(null);
+export interface ManualFoodDraft {
+  name: string;
+  macros: ComputedMacros;
+  servingSize: string | null;
+}
 
-  useEffect(() => {
-    if (state?.success) {
-      formRef.current?.reset();
-      onAdded?.();
+export function FoodEntryForm({ onContinue }: { onContinue: (draft: ManualFoodDraft) => void }) {
+  const [name, setName] = useState("");
+  const [calories, setCalories] = useState("");
+  const [protein, setProtein] = useState("");
+  const [carbs, setCarbs] = useState("");
+  const [fat, setFat] = useState("");
+  const [servingSize, setServingSize] = useState("");
+  const [error, setError] = useState<string | null>(null);
+
+  const submit = () => {
+    const cals = Number(calories);
+    const p = Number(protein);
+    const c = Number(carbs);
+    const f = Number(fat);
+    if (!name.trim()) {
+      setError("Give it a name.");
+      return;
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [state]);
+    if ([cals, p, c, f].some(Number.isNaN)) {
+      setError("Calories, protein, carbs, and fat must all be numbers.");
+      return;
+    }
+    setError(null);
+    onContinue({
+      name: name.trim(),
+      macros: { calories: cals, protein: p, carbs: c, fat: f },
+      servingSize: servingSize.trim() || null,
+    });
+  };
 
   return (
-    <form ref={formRef} action={formAction} className="space-y-3">
-      <input type="hidden" name="date" value={date} />
-      <input type="hidden" name="meal" value={meal} />
-
+    <div className="space-y-3">
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
         <div className="col-span-2 sm:col-span-4">
           <label className="block text-xs font-medium text-neutral-500">Food name</label>
           <input
-            name="name"
             type="text"
-            required
+            value={name}
+            onChange={(e) => setName(e.target.value)}
             className="mt-1 w-full rounded-md border border-neutral-300 px-2 py-1.5 text-sm dark:border-neutral-700 dark:bg-neutral-900"
           />
         </div>
@@ -43,10 +55,10 @@ export function FoodEntryForm({
         <div>
           <label className="block text-xs font-medium text-neutral-500">Calories</label>
           <input
-            name="calories"
             type="number"
             step="any"
-            required
+            value={calories}
+            onChange={(e) => setCalories(e.target.value)}
             className="mt-1 w-full rounded-md border border-neutral-300 px-2 py-1.5 text-sm dark:border-neutral-700 dark:bg-neutral-900"
           />
         </div>
@@ -54,10 +66,10 @@ export function FoodEntryForm({
         <div>
           <label className="block text-xs font-medium text-neutral-500">Protein (g)</label>
           <input
-            name="protein"
             type="number"
             step="any"
-            required
+            value={protein}
+            onChange={(e) => setProtein(e.target.value)}
             className="mt-1 w-full rounded-md border border-neutral-300 px-2 py-1.5 text-sm dark:border-neutral-700 dark:bg-neutral-900"
           />
         </div>
@@ -65,10 +77,10 @@ export function FoodEntryForm({
         <div>
           <label className="block text-xs font-medium text-neutral-500">Carbs (g)</label>
           <input
-            name="carbs"
             type="number"
             step="any"
-            required
+            value={carbs}
+            onChange={(e) => setCarbs(e.target.value)}
             className="mt-1 w-full rounded-md border border-neutral-300 px-2 py-1.5 text-sm dark:border-neutral-700 dark:bg-neutral-900"
           />
         </div>
@@ -76,47 +88,37 @@ export function FoodEntryForm({
         <div>
           <label className="block text-xs font-medium text-neutral-500">Fat (g)</label>
           <input
-            name="fat"
             type="number"
             step="any"
-            required
+            value={fat}
+            onChange={(e) => setFat(e.target.value)}
             className="mt-1 w-full rounded-md border border-neutral-300 px-2 py-1.5 text-sm dark:border-neutral-700 dark:bg-neutral-900"
           />
         </div>
 
-        <div>
-          <label className="block text-xs font-medium text-neutral-500">Quantity</label>
-          <input
-            name="quantity"
-            type="number"
-            step="any"
-            defaultValue={1}
-            className="mt-1 w-full rounded-md border border-neutral-300 px-2 py-1.5 text-sm dark:border-neutral-700 dark:bg-neutral-900"
-          />
-        </div>
-
-        <div className="col-span-2 sm:col-span-3">
+        <div className="col-span-2 sm:col-span-4">
           <label className="block text-xs font-medium text-neutral-500">
-            Serving size (optional)
+            Serving size (optional — e.g. &quot;1 cup&quot; or &quot;100 g&quot;)
           </label>
           <input
-            name="serving_size"
             type="text"
+            value={servingSize}
+            onChange={(e) => setServingSize(e.target.value)}
             placeholder="e.g. 1 cup"
             className="mt-1 w-full rounded-md border border-neutral-300 px-2 py-1.5 text-sm dark:border-neutral-700 dark:bg-neutral-900"
           />
         </div>
       </div>
 
-      {state?.error && <p className="text-sm text-red-600">{state.error}</p>}
+      {error && <p className="text-sm text-red-600">{error}</p>}
 
       <button
-        type="submit"
-        disabled={pending}
-        className="rounded-lg bg-tennessee px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-tennessee-dark disabled:opacity-50"
+        type="button"
+        onClick={submit}
+        className="rounded-lg bg-tennessee px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-tennessee-dark"
       >
-        {pending ? "Adding…" : "Add food"}
+        Continue
       </button>
-    </form>
+    </div>
   );
 }
